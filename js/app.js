@@ -3,7 +3,7 @@
  *  ============================================================ */
 
 // ⚠️ แก้ URL นี้เป็น Apps Script Web App URL ของคุณ
-const API_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxrz9sfLjPjdWFSvzUBhkYDe54-BG-bWOUUnmw6XKRDajoTbSVhUdHg3C12ZcwZXQLXDQ/exec';
 
 // ================= STATE =================
 let isConfirmMode = false;
