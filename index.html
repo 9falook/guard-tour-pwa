@@ -376,51 +376,56 @@ async function doLogin() {
   btn.disabled = true;
   btn.innerText = '⏳ กำลังตรวจสอบ...';
 
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'login', data: { name, pin } })
-    });
+  // ✅ ใช้ JSONP (bypass CORS)
+  const jsonpUrl = API_URL +
+    '?action=login' +
+    '&name=' + encodeURIComponent(name) +
+    '&pin=' + encodeURIComponent(pin) +
+    '&callback=__onLoginResult' +
+    '&_=' + Date.now();
 
-    // no-cors → ไม่เห็น response → ต้องถือว่า "ส่งได้" แล้วรอตรวจสอบอีกทาง
-    // วิธีแก้: ใช้ Google Apps Script ที่ return JSON ผ่าน GET
-    // เลี่ยงปัญหา: ใช้ fetch แบบ cors แทน + Apps Script รองรับ CORS
-    // หรือใช้ Iframe...
-
-    // ทางเลือกที่ชัวร์: ใช้ mode: 'cors' + Apps Script ตั้งค่า allow
-    // แต่ Apps Script ไม่ได้ return CORS header แบบสมบูรณ์
-
-    // วิธีที่ใช้ได้จริง: บันทึก session ชั่วคราว แล้วรอ sync
-    // แต่เพื่อความปลอดภัย ให้ทำ verify แบบ GET
-
-    const verifyRes = await fetch(API_URL + '?action=login&name=' +
-      encodeURIComponent(name) + '&pin=' + encodeURIComponent(pin), {
-      method: 'GET',
-      mode: 'cors'
-    });
-
-    const json = await verifyRes.json();
-
-    if (json.ok) {
-      saveSession({ name: json.name, fullName: json.fullName, pin });
-      toast('✅ ยินดีต้อนรับ ' + json.fullName);
-      setTimeout(() => location.href = window.location.pathname, 800);
-    } else {
-      err.innerText = '❌ ' + (json.msg || 'ชื่อหรือ PIN ไม่ถูกต้อง');
+  const timeout = setTimeout(() => {
+    if (window.__onLoginResult) {
+      window.__onLoginResult = null;
+      err.innerText = '❌ หมดเวลา — ลองอีกครั้ง';
       err.classList.add('show');
       btn.disabled = false;
       btn.innerText = '🔓 เข้าสู่ระบบ';
     }
-  } catch (e) {
-    // ถ้า fetch ล้มเหลว (CORS) → fallback: ให้ login แบบ local
-    // (ไม่แนะนำสำหรับ production แต่ใช้ได้ตอน dev)
-    err.innerText = '❌ ไม่สามารถตรวจสอบได้ ลองอีกครั้ง';
+  }, 20000);
+
+  window.__onLoginResult = function(json) {
+    clearTimeout(timeout);
+    window.__onLoginResult = null;
+
+    // ลบ script tag
+    const s = document.getElementById('jsonp-login');
+    if (s) s.remove();
+
+    if (json && json.ok) {
+      saveSession({ name: json.name, fullName: json.fullName, pin });
+      toast('✅ ยินดีต้อนรับ ' + json.fullName);
+      setTimeout(() => location.href = window.location.pathname, 800);
+    } else {
+      err.innerText = '❌ ' + ((json && json.msg) || 'ชื่อหรือ PIN ไม่ถูกต้อง');
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.innerText = '🔓 เข้าสู่ระบบ';
+    }
+  };
+
+  const script = document.createElement('script');
+  script.id = 'jsonp-login';
+  script.src = jsonpUrl;
+  script.onerror = function() {
+    clearTimeout(timeout);
+    window.__onLoginResult = null;
+    err.innerText = '❌ ไม่สามารถเชื่อมต่อ — ตรวจสอบอินเทอร์เน็ต';
     err.classList.add('show');
     btn.disabled = false;
     btn.innerText = '🔓 เข้าสู่ระบบ';
-  }
+  };
+  document.body.appendChild(script);
 }
 
 // ================= CLOCK =================
