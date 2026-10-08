@@ -1,0 +1,239 @@
+/* ================= RESET ================= */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+
+:root {
+  --primary: #00d4ff;
+  --primary-2: #0099ff;
+  --accent: #00ff88;
+  --warn: #ffb547;
+  --danger: #ff3366;
+  --purple: #a855f7;
+  --text: #e8ecff;
+  --text-dim: #8892b0;
+  --border: rgba(255,255,255,0.08);
+  --surface: rgba(255,255,255,0.03);
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: radial-gradient(ellipse at top, #1a1f3a 0%, #0a0e27 40%, #000 100%);
+  color: var(--text);
+  min-height: 100vh; padding: 14px;
+  display: flex; align-items: flex-start; justify-content: center;
+  overflow-x: hidden;
+}
+body::before {
+  content: ''; position: fixed; top: -50%; left: -50%;
+  width: 200%; height: 200%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(0,212,255,0.12) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(168,85,247,0.10) 0%, transparent 40%);
+  animation: bgFloat 25s ease-in-out infinite;
+}
+@keyframes bgFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, 20px) scale(1.05); }
+}
+
+.wrapper { width: 100%; max-width: 440px; margin-top: 8px; }
+
+/* ================= HEADER ================= */
+.top-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px; padding: 0 4px;
+}
+.beta-chip {
+  background: linear-gradient(135deg, #ff8c00, #ff6b00);
+  color: white; padding: 4px 10px; border-radius: 20px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+}
+.connection-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 4px 10px; border-radius: 20px;
+  background: rgba(0,255,136,0.1); color: var(--accent);
+  border: 1px solid rgba(0,255,136,0.25);
+}
+.connection-status.offline {
+  background: rgba(255,51,102,0.1); color: var(--danger);
+  border-color: rgba(255,51,102,0.3);
+}
+.connection-status .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; box-shadow: 0 0 8px currentColor;
+}
+
+.clock {
+  font-family: 'JetBrains Mono', monospace; font-size: 14px;
+  font-weight: 700; color: var(--text-dim);
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ================= CARD ================= */
+.card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+  border: 1px solid var(--border);
+  border-radius: 22px; padding: 22px 20px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset;
+  position: relative; overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0.6;
+}
+
+/* ================= CHECKPOINT ================= */
+.cp-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; }
+.cp-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+  box-shadow: 0 8px 24px rgba(0,212,255,0.2);
+}
+.cp-icon img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
+.cp-info { flex: 1; min-width: 0; }
+.cp-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700; color: var(--primary);
+  letter-spacing: 1.5px; margin-bottom: 4px;
+}
+.cp-name { font-size: 16px; font-weight: 700; line-height: 1.3; word-break: break-word; }
+
+/* ================= SHIFT BADGE ================= */
+.shift-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-radius: 12px;
+  background: rgba(0,255,136,0.08);
+  border: 1px solid rgba(0,255,136,0.25);
+  margin-bottom: 18px;
+  font-size: 12px; font-weight: 600;
+  transition: all 0.3s;
+}
+.shift-badge.warn {
+  background: rgba(255,181,71,0.08);
+  border-color: rgba(255,181,71,0.3);
+  color: var(--warn);
+}
+.shift-badge .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 10px var(--accent);
+}
+.shift-badge.warn .dot { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
+
+/* ================= INPUTS ================= */
+.field { margin-bottom: 14px; }
+.field label {
+  display: block; margin-bottom: 6px;
+  font-size: 12px; font-weight: 600; color: var(--text-dim);
+  letter-spacing: 0.5px; text-transform: uppercase;
+}
+.field input {
+  width: 100%; padding: 15px 16px;
+  font-family: inherit; font-size: 16px; font-weight: 600;
+  color: var(--text);
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  transition: all 0.2s; outline: none;
+}
+.field input::placeholder { color: var(--text-dim); font-weight: 500; }
+.field input:focus {
+  border-color: var(--primary);
+  background: rgba(0,212,255,0.06);
+  box-shadow: 0 0 0 4px rgba(0,212,255,0.1);
+}
+#pin {
+  letter-spacing: 10px; text-align: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 22px;
+}
+
+/* ================= GPS BAR ================= */
+.gps-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  margin: 16px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 600;
+  min-height: 42px; transition: all 0.3s;
+}
+.gps-bar.ok { background: rgba(0,255,136,0.06); border-color: rgba(0,255,136,0.25); color: var(--accent); }
+.gps-bar.warn { background: rgba(255,181,71,0.06); border-color: rgba(255,181,71,0.3); color: var(--warn); }
+.gps-bar.bad { background: rgba(255,51,102,0.06); border-color: rgba(255,51,102,0.3); color: var(--danger); }
+.gps-bar .spinner {
+  display: inline-block; width: 12px; height: 12px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: var(--primary); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ================= BUTTONS ================= */
+.btn-submit {
+  width: 100%; padding: 18px;
+  font-family: inherit; font-size: 16px; font-weight: 800;
+  color: #001a33;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+  border: none; border-radius: 14px;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 12px 32px rgba(0,212,255,0.35);
+  letter-spacing: 0.5px;
+}
+.btn-submit:active { transform: scale(0.98); }
+.btn-submit:disabled { background: rgba(255,255,255,0.1); color: var(--text-dim); box-shadow: none; cursor: not-allowed; }
+.btn-submit.confirm {
+  background: linear-gradient(135deg, #ff9800, #ff6b00);
+  color: white; animation: confirmPulse 1.5s infinite;
+}
+@keyframes confirmPulse {
+  0%,100% { box-shadow: 0 12px 32px rgba(255,152,0,0.4); }
+  50% { box-shadow: 0 12px 40px rgba(255,152,0,0.8); }
+}
+
+/* ================= STATUS ================= */
+#status {
+  margin-top: 16px; padding: 16px;
+  border-radius: 12px; font-size: 14px; font-weight: 600;
+  text-align: center; line-height: 1.6;
+  white-space: pre-line; display: none;
+  animation: slideIn 0.3s ease-out;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+#status.show { display: block; }
+#status.ok { background: rgba(0,255,136,0.1); color: var(--accent); border: 1px solid rgba(0,255,136,0.3); }
+#status.err { background: rgba(255,51,102,0.1); color: var(--danger); border: 1px solid rgba(255,51,102,0.3); }
+#status.warn { background: rgba(255,181,71,0.12); color: var(--warn); border: 1px solid rgba(255,181,71,0.4); }
+#status.info { background: rgba(0,212,255,0.08); color: var(--primary); border: 1px solid rgba(0,212,255,0.25); }
+
+/* ================= QUEUE BADGE ================= */
+#queueBadge {
+  display: none; margin-top: 12px; padding: 12px 14px;
+  background: rgba(255,181,71,0.1);
+  border: 1px solid rgba(255,181,71,0.3);
+  border-radius: 10px; color: var(--warn);
+  font-size: 12px; font-weight: 600;
+  text-align: center; line-height: 1.5;
+}
+#queueBadge button {
+  margin-top: 8px; padding: 6px 14px;
+  background: var(--warn); color: #001a33;
+  border: none; border-radius: 6px;
+  font-weight: 700; font-size: 11px; cursor: pointer;
+}
+
+/* ================= FOOTER ================= */
+.footer {
+  text-align: center; margin-top: 18px;
+  font-size: 10px; color: var(--text-dim); opacity: 0.6;
+  font-family: 'JetBrains Mono', monospace;
+}
