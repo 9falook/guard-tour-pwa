@@ -186,10 +186,11 @@
       </div>
 
       <!-- GPS BAR -->
-      <div class="gps-bar" id="gpsBar">
+      <div class="gps-bar" id="gpsBar" onclick="refreshGPS()" style="cursor:pointer;">
   <span id="gpsIcon">📡</span>
   <span class="spinner" id="gpsSpinner" style="display:none"></span>
-  <span id="gpsText">กดปุ่มเพื่อระบุตำแหน่ง</span>
+  <span id="gpsText">กำลังค้นหาตำแหน่ง...</span>
+  <span style="margin-left:auto; font-size:14px;" title="กดเพื่อรีเฟรช GPS">🔄</span>
 </div>
 <button id="btnLastPos" onclick="useLastPosition()" style="width:100%; margin-top:-10px; margin-bottom:10px; padding:10px; font-size:12px; background:rgba(255,181,71,0.1); border:1px solid rgba(255,181,71,0.3); border-radius:10px; color:#ffb547; font-family:inherit; font-weight:600; cursor:pointer; display:none;">
   ⏱️ ใช้ตำแหน่งล่าสุด (ถ้า GPS หาไม่ได้)
@@ -246,6 +247,11 @@ document.addEventListener('DOMContentLoaded', () => {
   parseUrl();
 });
 
+function refreshGPS() {
+  toast('🔄 กำลังรีเฟรช GPS...');
+  startWatchGPS();
+}
+  
 // ================= CLOCK =================
 function initClock() {
   const tick = () => {
