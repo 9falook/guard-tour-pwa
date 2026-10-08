@@ -187,10 +187,13 @@
 
       <!-- GPS BAR -->
       <div class="gps-bar" id="gpsBar">
-        <span id="gpsIcon">📡</span>
-        <span class="spinner" id="gpsSpinner" style="display:none"></span>
-        <span id="gpsText">กดปุ่มเพื่อระบุตำแหน่ง</span>
-      </div>
+  <span id="gpsIcon">📡</span>
+  <span class="spinner" id="gpsSpinner" style="display:none"></span>
+  <span id="gpsText">กดปุ่มเพื่อระบุตำแหน่ง</span>
+</div>
+<button id="btnLastPos" onclick="useLastPosition()" style="width:100%; margin-top:-10px; margin-bottom:10px; padding:10px; font-size:12px; background:rgba(255,181,71,0.1); border:1px solid rgba(255,181,71,0.3); border-radius:10px; color:#ffb547; font-family:inherit; font-weight:600; cursor:pointer; display:none;">
+  ⏱️ ใช้ตำแหน่งล่าสุด (ถ้า GPS หาไม่ได้)
+</button>
 
       <!-- SUBMIT -->
       <button class="btn-submit" id="btn" onclick="saveScan(false)">
@@ -508,43 +511,77 @@ async function saveScan(isConfirmed) {
   btn.disabled = true;
   setGpsStatus('loading', 'กำลังระบุตำแหน่ง...');
 
-  navigator.geolocation.getCurrentPosition(
+  // ✅ Smart GPS — รอนานขึ้นเมื่อไม่มีเน็ต
+const isOnline = navigator.onLine;
+const timeout = isOnline ? 30000 : 90000;   // มีเน็ต 30 วิ / ไม่มีเน็ต 90 วิ
+const maxAge = isOnline ? 0 : 300000;       // offline → ยอมรับตำแหน่งเก่าได้ 5 นาที
+
+setGpsStatus('loading', isOnline 
+  ? 'กำลังระบุตำแหน่ง...' 
+  : '📵 โหมดออฟไลน์ — GPS อาจใช้เวลา 30-90 วินาที');
+
+navigator.geolocation.getCurrentPosition(
     async pos => {
-      const acc = Math.round(pos.coords.accuracy);
-      const q = gpsQuality(acc);
-      setGpsStatus(q.state, q.text);
-
-      const scanData = {
-        cp: currentCp,
-        name: name,
-        pin: pin,
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-        acc: pos.coords.accuracy,
-        ts: Date.now(),
-        confirmed: isConfirmed
-      };
-
-      await GTDB.addScanToQueue(scanData);
-      await updateQueueBadge();
-
-      setStatus('📦 บันทึกแล้ว · จะ sync อัตโนมัติ', 'ok');
-      document.getElementById('pin').value = '';
-      btn.disabled = false;
-
-      if (navigator.onLine) setTimeout(syncQueue, 500);
-    },
-    err => {
-      let msg = 'ไม่สามารถระบุตำแหน่งได้';
-      if (err.code === 1) msg = 'คุณไม่อนุญาตให้เข้าถึงตำแหน่ง';
-      else if (err.code === 2) msg = 'หาตำแหน่งไม่ได้ ลองออกที่โล่ง';
-      else if (err.code === 3) msg = 'หมดเวลาหาตำแหน่ง';
-      setStatus('❌ ' + msg, 'err');
-      setGpsStatus('bad', 'ไม่สามารถระบุตำแหน่ง');
-      btn.disabled = false;
-    },
-    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-  );
+    const acc = Math.round(pos.coords.accuracy);
+    const q = gpsQuality(acc);
+    setGpsStatus(q.state, q.text);
+    
+    // ✅ เก็บตำแหน่งล่าสุดไว้ใช้ fallback
+    saveLastPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+    
+    // ซ่อนปุ่ม "ใช้ตำแหน่งล่าสุด"
+    const btnLast = document.getElementById('btnLastPos');
+    if (btnLast) btnLast.style.display = 'none';
+    
+    const scanData = {
+      cp: currentCp,
+      name: name,
+      pin: pin,
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude,
+      acc: pos.coords.accuracy,
+      ts: Date.now(),
+      confirmed: isConfirmed
+    };
+    
+    await GTDB.addScanToQueue(scanData);
+    await updateQueueBadge();
+    
+    setStatus('📦 บันทึกแล้ว · จะ sync อัตโนมัติ', 'ok');
+    document.getElementById('pin').value = '';
+    btn.disabled = false;
+    
+    if (navigator.onLine) setTimeout(syncQueue, 500);
+  },
+  err => {
+    let msg = 'ไม่สามารถระบุตำแหน่งได้';
+    if (err.code === 1) {
+      msg = 'คุณไม่อนุญาตให้เข้าถึงตำแหน่ง กรุณาเปิดการตั้งค่า';
+    } else if (err.code === 2) {
+      msg = isOnline 
+        ? 'หาตำแหน่งไม่ได้ — ลองออกที่โล่ง'
+        : '📵 โหมดออฟไลน์ — GPS ใช้เวลาเพิ่ม กรุณารอแล้วลองใหม่';
+    } else if (err.code === 3) {
+      msg = isOnline
+        ? 'หมดเวลา 30 วินาที — ลองอีกครั้ง'
+        : '📵 หมดเวลา 90 วินาที — ลองยืนที่โล่งแล้วกดใหม่';
+    }
+        setStatus('❌ ' + msg, 'err');
+    setGpsStatus('bad', 'ไม่สามารถระบุตำแหน่ง');
+    btn.disabled = false;
+    
+    // ✅ แสดงปุ่ม "ใช้ตำแหน่งล่าสุด" ถ้ามีข้อมูล
+    const btnLast = document.getElementById('btnLastPos');
+    if (btnLast && getLastPosition()) {
+      btnLast.style.display = 'block';
+    }
+  },
+  { 
+    enableHighAccuracy: true, 
+    timeout: timeout, 
+    maximumAge: maxAge 
+  }
+);
 }
 
 // ================= STATUS =================
@@ -600,6 +637,64 @@ async function updateQueueBadge() {
     badge.style.display = 'none';
   }
 }
+
+  // ================= USE LAST POSITION =================
+let _lastKnownPosition = null;
+
+// ฟังตำแหน่งที่สำเร็จ → เก็บไว้
+function saveLastPosition(lat, lng, acc) {
+  try {
+    localStorage.setItem('guardTour_lastPos', JSON.stringify({
+      lat, lng, acc, ts: Date.now()
+    }));
+  } catch (e) {}
+}
+
+function getLastPosition() {
+  try {
+    const s = localStorage.getItem('guardTour_lastPos');
+    if (!s) return null;
+    const data = JSON.parse(s);
+    // เก็บได้ไม่เกิน 30 นาที
+    if (Date.now() - data.ts > 30 * 60 * 1000) return null;
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+function useLastPosition() {
+  const last = getLastPosition();
+  if (!last) {
+    toast('❌ ไม่มีตำแหน่งที่บันทึกไว้');
+    return;
+  }
+
+  const ageMin = Math.round((Date.now() - last.ts) / 60000);
+  if (!confirm('ใช้ตำแหน่งที่บันทึกไว้ ' + ageMin + ' นาทีที่แล้ว?\n\nพิกัด: ' 
+    + last.lat.toFixed(6) + ', ' + last.lng.toFixed(6) 
+    + '\nความแม่นยำ: ±' + Math.round(last.acc) + ' ม.')) return;
+
+  // บันทึกด้วยตำแหน่งเดิม
+  (async () => {
+    await GTDB.addScanToQueue({
+      cp: currentCp,
+      name: document.getElementById('name').value.trim(),
+      pin: document.getElementById('pin').value.trim(),
+      lat: last.lat,
+      lng: last.lng,
+      acc: last.acc,
+      ts: Date.now(),
+      confirmed: false,
+      reusedPosition: true
+    });
+    await updateQueueBadge();
+    setStatus('📦 บันทึกด้วยตำแหน่งล่าสุดแล้ว', 'warn');
+    document.getElementById('pin').value = '';
+    if (navigator.onLine) setTimeout(syncQueue, 500);
+  })();
+}
+
 
 // ================= TOAST =================
 function toast(msg) {
