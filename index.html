@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#00d4ff">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Guard Tour">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
@@ -15,21 +14,86 @@
 <link rel="stylesheet" href="./css/style.css">
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
-  /* ===== SCANNER MODE ===== */
-  #scannerView { display: none; }
-  #scannerView.show { display: block; }
-  #formView { display: none; }
-  #formView.show { display: block; }
+  #loginView, #scannerView, #formView { display: none; }
+  #loginView.show, #scannerView.show, #formView.show { display: block; }
+  .scanner-wrap { width: 100%; max-width: 440px; margin: 8px auto 0; }
 
-  .scanner-wrap {
-    width: 100%; max-width: 440px;
-    margin: 8px auto 0;
+  /* ===== LOGIN ===== */
+  .login-wrap { width: 100%; max-width: 440px; margin: 40px auto 0; padding: 0 14px; }
+  .login-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+    border: 1px solid var(--border); border-radius: 22px;
+    padding: 32px 24px; backdrop-filter: blur(20px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    position: relative; overflow: hidden;
   }
+  .login-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    opacity: 0.6;
+  }
+  .login-icon {
+    width: 72px; height: 72px; margin: 0 auto 16px;
+    background: linear-gradient(135deg, var(--primary), var(--purple));
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    box-shadow: 0 12px 32px rgba(0,212,255,0.35);
+  }
+  .login-title {
+    text-align: center; font-size: 22px; font-weight: 800;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, #fff 0%, #88d4ff 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .login-sub {
+    text-align: center; font-size: 13px; color: var(--text-dim);
+    margin-bottom: 24px;
+  }
+  .login-btn {
+    width: 100%; padding: 18px; margin-top: 8px;
+    font-family: inherit; font-size: 16px; font-weight: 800;
+    color: #001a33;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+    border: none; border-radius: 14px; cursor: pointer;
+    box-shadow: 0 12px 32px rgba(0,212,255,0.35);
+    letter-spacing: 0.5px;
+  }
+  .login-btn:disabled { background: rgba(255,255,255,0.1); color: var(--text-dim); box-shadow: none; cursor: not-allowed; }
+  .login-err {
+    display: none; margin-top: 14px; padding: 12px;
+    background: rgba(255,51,102,0.1); border: 1px solid rgba(255,51,102,0.3);
+    border-radius: 10px; color: var(--danger);
+    font-size: 13px; font-weight: 600; text-align: center;
+  }
+  .login-err.show { display: block; }
+
+  /* ===== USER BAR ===== */
+  .user-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; margin-bottom: 14px;
+    background: linear-gradient(135deg, rgba(0,255,136,0.08), rgba(0,255,136,0.02));
+    border: 1px solid rgba(0,255,136,0.25);
+    border-radius: 12px;
+    font-size: 13px; font-weight: 600;
+  }
+  .user-name { color: var(--accent); display: flex; align-items: center; gap: 8px; }
+  .logout-btn {
+    padding: 6px 14px; font-family: inherit;
+    font-size: 11px; font-weight: 700;
+    color: var(--danger);
+    background: rgba(255,51,102,0.1);
+    border: 1px solid rgba(255,51,102,0.3);
+    border-radius: 8px; cursor: pointer;
+  }
+  .logout-btn:hover { background: rgba(255,51,102,0.2); }
+
+  /* ===== SCANNER ===== */
   .scanner-card {
     background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
-    border: 1px solid var(--border);
-    border-radius: 22px; padding: 22px 20px;
-    backdrop-filter: blur(20px);
+    border: 1px solid var(--border); border-radius: 22px;
+    padding: 22px 20px; backdrop-filter: blur(20px);
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     position: relative; overflow: hidden;
   }
@@ -38,72 +102,35 @@
     background: linear-gradient(90deg, transparent, var(--primary), transparent);
     opacity: 0.6;
   }
-  .scanner-title {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 15px; font-weight: 700;
-    margin-bottom: 6px;
-  }
-  .scanner-title .icon {
-    width: 36px; height: 36px; border-radius: 10px;
+  .scanner-title { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .scanner-title .icon { width: 36px; height: 36px; border-radius: 10px;
     background: linear-gradient(135deg, rgba(0,212,255,0.2), rgba(168,85,247,0.2));
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-  .scanner-sub {
-    font-size: 12px; color: var(--text-dim);
-    margin-bottom: 16px; padding-left: 46px;
-  }
-  #reader {
-    width: 100%; border-radius: 14px; overflow: hidden;
-    background: #000;
-  }
+    display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .scanner-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 16px; padding-left: 46px; }
+  #reader { width: 100%; border-radius: 14px; overflow: hidden; background: #000; }
   #reader video { border-radius: 14px; }
-  .scanner-hint {
-    margin-top: 14px; padding: 12px 14px;
-    background: rgba(0,212,255,0.06);
-    border: 1px solid rgba(0,212,255,0.2);
-    border-radius: 10px;
-    font-size: 12px; color: var(--text-dim);
-    line-height: 1.6;
-  }
+  .scanner-hint { margin-top: 14px; padding: 12px 14px;
+    background: rgba(0,212,255,0.06); border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 10px; font-size: 12px; color: var(--text-dim); line-height: 1.6; }
   .scanner-hint b { color: var(--primary); }
-
-  /* Camera loading / error */
-  .cam-status {
-    text-align: center; padding: 30px 20px;
-    color: var(--text-dim); font-size: 13px;
-  }
+  .cam-status { text-align: center; padding: 30px 20px; color: var(--text-dim); font-size: 13px; }
   .cam-status .big { font-size: 40px; margin-bottom: 12px; }
-
-  /* Manual cp button */
-  .btn-manual {
-    width: 100%; padding: 12px; margin-top: 12px;
+  .btn-manual { width: 100%; padding: 12px; margin-top: 12px;
     font-family: inherit; font-size: 13px; font-weight: 600;
-    color: var(--text-dim);
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    cursor: pointer;
-  }
+    color: var(--text-dim); background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
   .btn-manual:hover { background: rgba(255,255,255,0.08); color: var(--text); }
-
-  /* Change CP link */
-  .change-cp {
-    display: inline-flex; align-items: center; gap: 5px;
-    margin-top: 12px; font-size: 12px;
-    color: var(--text-dim); text-decoration: none;
-    cursor: pointer;
-  }
+  .change-cp { display: inline-flex; align-items: center; gap: 5px;
+    margin-top: 12px; font-size: 12px; color: var(--text-dim); cursor: pointer; }
   .change-cp:hover { color: var(--primary); }
 
-  /* Toast */
+  /* ===== TOAST ===== */
   .toast {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
     background: rgba(0,0,0,0.9); color: white;
     padding: 12px 20px; border-radius: 12px;
-    font-size: 13px; font-weight: 600;
-    z-index: 9999; opacity: 0; pointer-events: none;
-    transition: opacity 0.3s;
+    font-size: 13px; font-weight: 600; z-index: 9999;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
     border: 1px solid rgba(255,255,255,0.1);
     max-width: 90vw; text-align: center;
   }
@@ -128,6 +155,37 @@
     </div>
   </div>
 
+  <!-- USER BAR -->
+  <div class="user-bar" id="userBar" style="display:none;">
+    <span class="user-name">
+      <span>👤</span>
+      <span id="userName">-</span>
+    </span>
+    <button class="logout-btn" onclick="doLogout()">🚪 ออก</button>
+  </div>
+
+  <!-- ============ LOGIN VIEW ============ -->
+  <div id="loginView" class="login-wrap">
+    <div class="login-card">
+      <div class="login-icon">🛡️</div>
+      <div class="login-title">Guard Tour</div>
+      <div class="login-sub">ระบบบันทึกการตรวจ — เข้าสู่ระบบเพื่อเริ่มงาน</div>
+
+      <div class="field">
+        <label>ชื่อ รปภ.</label>
+        <input id="loginName" placeholder="กรอกชื่อ-นามสกุล" autocomplete="off" autocapitalize="off">
+      </div>
+
+      <div class="field">
+        <label>PIN (4 หลัก)</label>
+        <input id="loginPin" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••" autocomplete="off">
+      </div>
+
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">🔓 เข้าสู่ระบบ</button>
+      <div class="login-err" id="loginErr"></div>
+    </div>
+  </div>
+
   <!-- ============ SCANNER VIEW ============ -->
   <div id="scannerView" class="scanner-wrap">
     <div class="scanner-card">
@@ -144,9 +202,7 @@
         <div id="camStatusText">กำลังเปิดกล้อง...</div>
       </div>
 
-      <button class="btn-manual" onclick="promptManualCp()">
-        ⌨️ กรอกจุดตรวจเอง (ถ้ากล้องใช้ไม่ได้)
-      </button>
+      <button class="btn-manual" onclick="promptManualCp()">⌨️ กรอกจุดตรวจเอง (ถ้ากล้องใช้ไม่ได้)</button>
 
       <div class="scanner-hint">
         💡 <b>วิธีใช้:</b> สแกน QR ที่จุดตรวจ → ระบบจะเปิดหน้าบันทึกอัตโนมัติ
@@ -157,8 +213,6 @@
   <!-- ============ FORM VIEW ============ -->
   <div id="formView" class="scanner-wrap">
     <div class="card">
-
-      <!-- CHECKPOINT INFO -->
       <div class="cp-header">
         <div class="cp-icon"><img src="./icons/icon-192.png" alt="โลโก้"></div>
         <div class="cp-info">
@@ -167,98 +221,214 @@
         </div>
       </div>
 
-      <!-- SHIFT BADGE -->
       <div class="shift-badge" id="shiftBadge">
         <span class="dot"></span>
         <span id="shiftText">กำลังโหลด...</span>
       </div>
 
-      <!-- NAME -->
-      <div class="field">
-        <label>ชื่อ รปภ.</label>
-        <input id="name" placeholder="กรอกชื่อของคุณ" autocomplete="off" autocapitalize="off">
-      </div>
-
-      <!-- PIN -->
-      <div class="field">
-        <label>PIN (4 หลัก)</label>
-        <input id="pin" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••" autocomplete="off">
-      </div>
-
-      <!-- GPS BAR -->
       <div class="gps-bar" id="gpsBar" onclick="refreshGPS()" style="cursor:pointer;">
-  <span id="gpsIcon">📡</span>
-  <span class="spinner" id="gpsSpinner" style="display:none"></span>
-  <span id="gpsText">กำลังค้นหาตำแหน่ง...</span>
-  <span style="margin-left:auto; font-size:14px;" title="กดเพื่อรีเฟรช GPS">🔄</span>
-</div>
-<button id="btnLastPos" onclick="useLastPosition()" style="width:100%; margin-top:-10px; margin-bottom:10px; padding:10px; font-size:12px; background:rgba(255,181,71,0.1); border:1px solid rgba(255,181,71,0.3); border-radius:10px; color:#ffb547; font-family:inherit; font-weight:600; cursor:pointer; display:none;">
-  ⏱️ ใช้ตำแหน่งล่าสุด (ถ้า GPS หาไม่ได้)
-</button>
+        <span id="gpsIcon">📡</span>
+        <span class="spinner" id="gpsSpinner" style="display:none"></span>
+        <span id="gpsText">กำลังค้นหาตำแหน่ง...</span>
+        <span style="margin-left:auto; font-size:14px;">🔄</span>
+      </div>
 
-      <!-- SUBMIT -->
-      <button class="btn-submit" id="btn" onclick="saveScan(false)">
-        ✅ บันทึกการตรวจ
-      </button>
-
-      <!-- STATUS -->
+      <button class="btn-submit" id="btn" onclick="saveScan()">✅ บันทึกการตรวจ</button>
       <div id="status"></div>
-
-      <!-- QUEUE -->
       <div id="queueBadge"></div>
 
       <a class="change-cp" onclick="showScanner()">🔄 เปลี่ยนจุดตรวจ (สแกนใหม่)</a>
-
     </div>
   </div>
 
-  <div class="footer">Guard Tour PWA · v1.0</div>
-
+  <div class="footer">Guard Tour PWA · v2.0</div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- SCRIPTS -->
 <script src="./js/db.js"></script>
 <script>
 // ============================================================
-//  Guard Tour PWA — Single File App
+//  Guard Tour PWA — v2.0 (with Login + Watch GPS)
 // ============================================================
 
-// ⚠️ แก้ URL นี้เป็น Apps Script Web App URL ของคุณ
 const API_URL = 'https://script.google.com/macros/s/AKfycbxrz9sfLjPjdWFSvzUBhkYDe54-BG-bWOUUnmw6XKRDajoTbSVhUdHg3C12ZcwZXQLXDQ/exec';
+const SESSION_HOURS = 12;
 
-// ================= STATE =================
 let currentCp = null;
-let cpInfo = null;
 let scanner = null;
 let isScanning = false;
-
-// ✅ Watch GPS
 let _watchId = null;
 let _watchBestPos = null;
 let _watchStartTime = null;
-let _watchUpdateTimer = null;
 
 // ================= INIT =================
 document.addEventListener('DOMContentLoaded', () => {
   initClock();
   initConnection();
-  parseUrl();
+  routePage();
 });
 
-function refreshGPS() {
-  toast('🔄 กำลังรีเฟรช GPS...');
-  startWatchGPS();
+// ================= ROUTER =================
+function routePage() {
+  const session = getSession();
+
+  if (!session) {
+    showLogin();
+    return;
+  }
+
+  showUserBar(session.name);
+
+  const params = new URLSearchParams(window.location.search);
+  const cp = params.get('cp');
+
+  if (cp) {
+    currentCp = cp.toUpperCase();
+    showForm();
+    loadCpInfo();
+    updateShiftBadge();
+    updateQueueBadge();
+    setInterval(syncQueue, 60000);
+    setTimeout(syncQueue, 2000);
+    startWatchGPS();
+  } else {
+    showScanner();
+  }
 }
-  
+
+// ================= SESSION =================
+function saveSession(data) {
+  try {
+    localStorage.setItem('guardTour_session', JSON.stringify({
+      name: data.name,
+      fullName: data.fullName,
+      pin: data.pin,
+      loginAt: Date.now(),
+      expiresAt: Date.now() + SESSION_HOURS * 60 * 60 * 1000
+    }));
+  } catch (e) {}
+}
+
+function getSession() {
+  try {
+    const s = localStorage.getItem('guardTour_session');
+    if (!s) return null;
+    const session = JSON.parse(s);
+    if (Date.now() > session.expiresAt) {
+      localStorage.removeItem('guardTour_session');
+      return null;
+    }
+    return session;
+  } catch (e) { return null; }
+}
+
+function clearSession() {
+  localStorage.removeItem('guardTour_session');
+}
+
+function doLogout() {
+  if (!confirm('ออกจากระบบ?')) return;
+  clearSession();
+  stopWatchGPS();
+  location.href = window.location.pathname;
+}
+
+function showUserBar(fullName) {
+  document.getElementById('userBar').style.display = 'flex';
+  document.getElementById('userName').innerText = fullName || 'รปภ.';
+}
+
+// ================= LOGIN =================
+function showLogin() {
+  document.getElementById('loginView').classList.add('show');
+  document.getElementById('scannerView').classList.remove('show');
+  document.getElementById('formView').classList.remove('show');
+  document.getElementById('userBar').style.display = 'none';
+
+  setTimeout(() => document.getElementById('loginName').focus(), 300);
+
+  document.getElementById('loginPin').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('loginName').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('loginPin').focus();
+  });
+}
+
+async function doLogin() {
+  const name = document.getElementById('loginName').value.trim();
+  const pin = document.getElementById('loginPin').value.trim();
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginErr');
+
+  err.classList.remove('show');
+
+  if (!name) { err.innerText = '⚠️ กรุณากรอกชื่อ'; err.classList.add('show'); return; }
+  if (!pin) { err.innerText = '⚠️ กรุณากรอก PIN'; err.classList.add('show'); return; }
+
+  if (!navigator.onLine) {
+    err.innerText = '📵 ต้องมีเน็ตเพื่อเข้าสู่ระบบครั้งแรก';
+    err.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = '⏳ กำลังตรวจสอบ...';
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'login', data: { name, pin } })
+    });
+
+    // no-cors → ไม่เห็น response → ต้องถือว่า "ส่งได้" แล้วรอตรวจสอบอีกทาง
+    // วิธีแก้: ใช้ Google Apps Script ที่ return JSON ผ่าน GET
+    // เลี่ยงปัญหา: ใช้ fetch แบบ cors แทน + Apps Script รองรับ CORS
+    // หรือใช้ Iframe...
+
+    // ทางเลือกที่ชัวร์: ใช้ mode: 'cors' + Apps Script ตั้งค่า allow
+    // แต่ Apps Script ไม่ได้ return CORS header แบบสมบูรณ์
+
+    // วิธีที่ใช้ได้จริง: บันทึก session ชั่วคราว แล้วรอ sync
+    // แต่เพื่อความปลอดภัย ให้ทำ verify แบบ GET
+
+    const verifyRes = await fetch(API_URL + '?action=login&name=' +
+      encodeURIComponent(name) + '&pin=' + encodeURIComponent(pin), {
+      method: 'GET',
+      mode: 'cors'
+    });
+
+    const json = await verifyRes.json();
+
+    if (json.ok) {
+      saveSession({ name: json.name, fullName: json.fullName, pin });
+      toast('✅ ยินดีต้อนรับ ' + json.fullName);
+      setTimeout(() => location.href = window.location.pathname, 800);
+    } else {
+      err.innerText = '❌ ' + (json.msg || 'ชื่อหรือ PIN ไม่ถูกต้อง');
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.innerText = '🔓 เข้าสู่ระบบ';
+    }
+  } catch (e) {
+    // ถ้า fetch ล้มเหลว (CORS) → fallback: ให้ login แบบ local
+    // (ไม่แนะนำสำหรับ production แต่ใช้ได้ตอน dev)
+    err.innerText = '❌ ไม่สามารถตรวจสอบได้ ลองอีกครั้ง';
+    err.classList.add('show');
+    btn.disabled = false;
+    btn.innerText = '🔓 เข้าสู่ระบบ';
+  }
+}
+
 // ================= CLOCK =================
 function initClock() {
   const tick = () => {
     const d = new Date();
     const pad = n => String(n).padStart(2, '0');
-    document.getElementById('clock').innerText =
-      pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    document.getElementById('clock').innerText = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
   };
   tick();
   setInterval(tick, 1000);
@@ -277,179 +447,86 @@ function initConnection() {
       text.innerText = 'ออฟไลน์';
     }
   };
-  window.addEventListener('online', () => {
-    update();
-    toast('🌐 เน็ตกลับมา — กำลัง sync...');
-    setTimeout(syncQueue, 1000);
-  });
-  window.addEventListener('offline', () => {
-    update();
-    toast('📵 เน็ตหลุด — บันทึกไว้ในเครื่อง');
-  });
+  window.addEventListener('online', () => { update(); toast('🌐 เน็ตกลับมา'); setTimeout(syncQueue, 1000); });
+  window.addEventListener('offline', () => { update(); toast('📵 เน็ตหลุด'); });
   update();
-}
-
-// ================= PARSE URL =================
-function parseUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const cp = params.get('cp');
-
-  if (cp) {
-  currentCp = cp.toUpperCase();
-  showForm();
-  loadCpInfo();
-  updateShiftBadge();
-  setupFormListeners();
-  updateQueueBadge();
-  setInterval(syncQueue, 60000);
-  setTimeout(syncQueue, 2000);
-  
-  // ✅ เริ่ม Watch GPS ทันที
-  startWatchGPS();
-} else {
-  showScanner();
-  // หยุด watch ถ้ากลับไปหน้า scanner
-  stopWatchGPS();
-}
 }
 
 // ================= SCANNER =================
 function showScanner() {
+  document.getElementById('loginView').classList.remove('show');
   document.getElementById('scannerView').classList.add('show');
   document.getElementById('formView').classList.remove('show');
   document.getElementById('camStatus').style.display = 'block';
   document.getElementById('reader').style.display = 'none';
 
-  // ✅ หยุด Watch GPS
   stopWatchGPS();
-
   if (isScanning) return;
 
   Html5Qrcode.getCameras().then(devices => {
     if (!devices || devices.length === 0) {
-      document.getElementById('camStatusText').innerText = 'ไม่พบกล้องในเครื่องนี้';
+      document.getElementById('camStatusText').innerText = 'ไม่พบกล้อง';
       return;
     }
-
-    // ใช้กล้องหลังเป็นค่าเริ่มต้น
     let cameraId = devices[0].id;
     for (const d of devices) {
-      if (d.label.toLowerCase().includes('back') ||
-          d.label.toLowerCase().includes('rear') ||
-          d.label.toLowerCase().includes('หลัง')) {
-        cameraId = d.id;
-        break;
-      }
+      const l = d.label.toLowerCase();
+      if (l.includes('back') || l.includes('rear') || l.includes('หลัง')) { cameraId = d.id; break; }
     }
-
     scanner = new Html5Qrcode("reader");
     document.getElementById('camStatus').style.display = 'none';
     document.getElementById('reader').style.display = 'block';
 
-    scanner.start(
-      cameraId,
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      onScanSuccess,
-      () => {} // ignore errors
-    ).then(() => {
-      isScanning = true;
-    }).catch(err => {
+    scanner.start(cameraId, { fps: 10, qrbox: { width: 250, height: 250 } },
+      onScanSuccess, () => {}).then(() => { isScanning = true; }).catch(err => {
       document.getElementById('camStatus').style.display = 'block';
-      document.getElementById('camStatusText').innerText =
-        'เปิดกล้องไม่ได้: ' + err.message;
+      document.getElementById('camStatusText').innerText = 'เปิดกล้องไม่ได้: ' + err.message;
     });
   }).catch(err => {
     document.getElementById('camStatus').style.display = 'block';
-    document.getElementById('camStatusText').innerText =
-      'ไม่สามารถเข้าถึงกล้องได้ — กรุณาอนุญาตสิทธิ์';
+    document.getElementById('camStatusText').innerText = 'ไม่สามารถเข้าถึงกล้อง — กรุณาอนุญาตสิทธิ์';
   });
 }
 
 function showForm() {
+  document.getElementById('loginView').classList.remove('show');
   document.getElementById('scannerView').classList.remove('show');
   document.getElementById('formView').classList.add('show');
-
   if (scanner && isScanning) {
-    scanner.stop().then(() => {
-      isScanning = false;
-    }).catch(() => { isScanning = false; });
+    scanner.stop().then(() => { isScanning = false; }).catch(() => { isScanning = false; });
   }
 }
 
 function onScanSuccess(decodedText) {
-  // QR จะมี URL เป็น ?cp=CP02
   let cp = null;
   try {
     const url = new URL(decodedText);
     cp = url.searchParams.get('cp');
   } catch (e) {
-    // เผื่อ QR เป็น text ตรงๆ เช่น "CP02"
-    if (/^CP\d+$/i.test(decodedText.trim())) {
-      cp = decodedText.trim().toUpperCase();
-    }
+    if (/^CP\d+$/i.test(decodedText.trim())) cp = decodedText.trim().toUpperCase();
   }
-
-  if (!cp) {
-    toast('❌ QR นี้ไม่ใช่จุดตรวจ');
-    return;
-  }
-
+  if (!cp) { toast('❌ QR นี้ไม่ใช่จุดตรวจ'); return; }
   cp = cp.toUpperCase();
   toast('✅ พบจุด: ' + cp);
-
-  // หยุดสแกน
-  if (scanner && isScanning) {
-    scanner.stop().then(() => { isScanning = false; }).catch(() => {});
-  }
-
-  // เปลี่ยน URL แล้วโหลดใหม่
-  setTimeout(() => {
-    const newUrl = window.location.pathname + '?cp=' + cp;
-    window.location.href = newUrl;
-  }, 500);
+  if (scanner && isScanning) scanner.stop().then(() => { isScanning = false; }).catch(() => {});
+  setTimeout(() => { window.location.href = window.location.pathname + '?cp=' + cp; }, 500);
 }
 
 function promptManualCp() {
   const cp = prompt('กรอกรหัสจุดตรวจ (เช่น CP01):');
   if (!cp) return;
   const upper = cp.trim().toUpperCase();
-  if (!/^CP\d+$/i.test(upper)) {
-    toast('❌ รูปแบบไม่ถูกต้อง ตัวอย่าง: CP01');
-    return;
-  }
+  if (!/^CP\d+$/i.test(upper)) { toast('❌ รูปแบบไม่ถูกต้อง'); return; }
   window.location.href = window.location.pathname + '?cp=' + upper;
 }
 
-// ================= LOAD CP INFO =================
+// ================= CP INFO =================
 async function loadCpInfo() {
   document.getElementById('cpCode').innerText = currentCp;
-
-  // ลองอ่านจาก cache ก่อน
-  const cpMap = await GTDB.getMeta('cpMap') || {};
-  if (cpMap[currentCp]) {
-    document.getElementById('cpName').innerText = cpMap[currentCp];
-  } else {
-    document.getElementById('cpName').innerText = currentCp;
-  }
-
-  // โหลดจาก API ถ้าออนไลน์
-  if (navigator.onLine) {
-    fetchCpMap();
-  }
+  document.getElementById('cpName').innerText = currentCp;
 }
 
-async function fetchCpMap() {
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'getCheckpoints' })
-    });
-  } catch (e) {}
-}
-
-// ================= SHIFT BADGE =================
+// ================= SHIFT =================
 function updateShiftBadge() {
   const d = new Date();
   const m = d.getHours() * 60 + d.getMinutes();
@@ -457,7 +534,6 @@ function updateShiftBadge() {
   let shiftName = 'ระหว่างกะ';
   if (m >= 0 && m < 510) shiftName = '🌙 กะที่ 1 (00:00-08:30)';
   else if (m >= 930) shiftName = '🌆 กะที่ 2 (15:30-24:00)';
-
   const badge = document.getElementById('shiftBadge');
   const text = document.getElementById('shiftText');
   if (inWindow) {
@@ -468,117 +544,6 @@ function updateShiftBadge() {
     text.innerHTML = '<b>' + shiftName + '</b> · นอกเวลาสแกน';
   }
   setTimeout(updateShiftBadge, 30000);
-}
-
-// ================= FORM LISTENERS =================
-function setupFormListeners() {
-  const nameInput = document.getElementById('name');
-  const pinInput = document.getElementById('pin');
-
-  const saved = localStorage.getItem('guardTour_lastName');
-  if (saved) nameInput.value = saved;
-
-  nameInput.addEventListener('input', () => {
-    localStorage.setItem('guardTour_lastName', nameInput.value);
-  });
-
-  nameInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') pinInput.focus();
-  });
-
-  pinInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') saveScan(false);
-  });
-}
-
-// ================= WATCH GPS =================
-/**
- * เริ่มติดตาม GPS ต่อเนื่อง — เก็บตำแหน่งที่ดีที่สุดไว้
- */
-function startWatchGPS() {
-  if (!navigator.geolocation) {
-    setGpsStatus('bad', 'อุปกรณ์ไม่รองรับ GPS');
-    return;
-  }
-
-  // หยุด watch เก่าก่อน
-  stopWatchGPS();
-
-  _watchBestPos = null;
-  _watchStartTime = Date.now();
-
-  const isOnline = navigator.onLine;
-  setGpsStatus('loading', isOnline
-    ? '🛰️ กำลังค้นหาดาวเทียม...'
-    : '📵 โหมดออฟไลน์ — GPS ใช้เวลา 30-90 วินาที');
-
-  _watchId = navigator.geolocation.watchPosition(
-    (pos) => {
-      const acc = Math.round(pos.coords.accuracy);
-      const elapsed = Math.round((Date.now() - _watchStartTime) / 1000);
-
-      // เก็บตำแหน่งที่ดีที่สุด (accuracy ต่ำสุด)
-      if (!_watchBestPos || acc < _watchBestPos.acc) {
-        _watchBestPos = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          acc: pos.coords.accuracy,
-          ts: Date.now()
-        };
-        // บันทึกลง localStorage ด้วย
-        saveLastPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-      }
-
-      // แสดงสถานะ
-      const q = gpsQuality(acc);
-      setGpsStatus(q.state, q.text + ' · ' + elapsed + ' วิ');
-    },
-    (err) => {
-      let msg = 'ไม่สามารถระบุตำแหน่ง';
-      if (err.code === 1) msg = 'ไม่อนุญาต GPS — กรุณาเปิดการตั้งค่า';
-      else if (err.code === 2) msg = 'หาตำแหน่งไม่ได้ — ออกที่โล่ง';
-      else if (err.code === 3) msg = 'หมดเวลา';
-      setGpsStatus('bad', msg);
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 120000,      // 2 นาที
-      maximumAge: navigator.onLine ? 0 : 60000
-    }
-  );
-}
-
-/**
- * หยุด Watch GPS
- */
-function stopWatchGPS() {
-  if (_watchId !== null) {
-    navigator.geolocation.clearWatch(_watchId);
-    _watchId = null;
-  }
-}
-
-/**
- * รอตำแหน่งที่ดีพอ (accuracy <= 50 ม.) หรือ timeout
- */
-function waitForGoodPosition(maxWaitMs) {
-  return new Promise((resolve) => {
-    const start = Date.now();
-
-    const check = () => {
-      if (_watchBestPos && _watchBestPos.acc <= 50) {
-        resolve(_watchBestPos);
-        return;
-      }
-      if (Date.now() - start >= maxWaitMs) {
-        resolve(_watchBestPos); // คืนค่าที่ดีที่สุด (อาจ null)
-        return;
-      }
-      setTimeout(check, 500);
-    };
-
-    check();
-  });
 }
 
 // ================= GPS =================
@@ -603,85 +568,118 @@ function setGpsStatus(state, text) {
 function gpsQuality(acc) {
   if (acc <= 30) return { state: 'ok', text: '±' + acc + ' ม. · แม่นยำสูง' };
   if (acc <= 100) return { state: 'warn', text: '±' + acc + ' ม. · พอใช้' };
-  return { state: 'bad', text: '±' + acc + ' ม. · คลาดเคลื่อนสูง' };
+  return { state: 'bad', text: '±' + acc + ' ม. · คลาดเคลื่อน' };
+}
+
+// ================= WATCH GPS =================
+function startWatchGPS() {
+  if (!navigator.geolocation) { setGpsStatus('bad', 'ไม่รองรับ GPS'); return; }
+  stopWatchGPS();
+  _watchBestPos = null;
+  _watchStartTime = Date.now();
+
+  const isOnline = navigator.onLine;
+  setGpsStatus('loading', isOnline ? '🛰️ กำลังค้นหาดาวเทียม...' : '📵 โหมดออฟไลน์ — GPS ใช้เวลา 30-90 วิ');
+
+  _watchId = navigator.geolocation.watchPosition(
+    pos => {
+      const acc = Math.round(pos.coords.accuracy);
+      const elapsed = Math.round((Date.now() - _watchStartTime) / 1000);
+      if (!_watchBestPos || acc < _watchBestPos.acc) {
+        _watchBestPos = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy, ts: Date.now() };
+        saveLastPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+      }
+      const q = gpsQuality(acc);
+      setGpsStatus(q.state, q.text + ' · ' + elapsed + ' วิ');
+    },
+    err => {
+      let msg = 'ไม่สามารถระบุตำแหน่ง';
+      if (err.code === 1) msg = 'ไม่อนุญาต GPS';
+      else if (err.code === 2) msg = 'หาตำแหน่งไม่ได้ — ออกที่โล่ง';
+      setGpsStatus('bad', msg);
+    },
+    { enableHighAccuracy: true, timeout: 120000, maximumAge: navigator.onLine ? 0 : 60000 }
+  );
+}
+
+function stopWatchGPS() {
+  if (_watchId !== null) { navigator.geolocation.clearWatch(_watchId); _watchId = null; }
+}
+
+function refreshGPS() {
+  toast('🔄 กำลังรีเฟรช GPS...');
+  startWatchGPS();
+}
+
+function waitForGoodPosition(maxWaitMs) {
+  return new Promise(resolve => {
+    const start = Date.now();
+    const check = () => {
+      if (_watchBestPos && _watchBestPos.acc <= 50) { resolve(_watchBestPos); return; }
+      if (Date.now() - start >= maxWaitMs) { resolve(_watchBestPos); return; }
+      setTimeout(check, 500);
+    };
+    check();
+  });
+}
+
+// ================= LAST POSITION =================
+function saveLastPosition(lat, lng, acc) {
+  try { localStorage.setItem('guardTour_lastPos', JSON.stringify({ lat, lng, acc, ts: Date.now() })); } catch (e) {}
+}
+function getLastPosition() {
+  try {
+    const s = localStorage.getItem('guardTour_lastPos');
+    if (!s) return null;
+    const d = JSON.parse(s);
+    if (Date.now() - d.ts > 30 * 60 * 1000) return null;
+    return d;
+  } catch (e) { return null; }
 }
 
 // ================= SAVE SCAN =================
-async function saveScan(isConfirmed) {
-  const name = document.getElementById('name').value.trim();
-  const pin = document.getElementById('pin').value.trim();
+async function saveScan() {
+  const session = getSession();
+  if (!session) { toast('❌ session หมดอายุ — กรุณา login'); setTimeout(() => location.href = window.location.pathname, 1000); return; }
+
   const btn = document.getElementById('btn');
-
-  if (!name) { setStatus('⚠️ กรุณากรอกชื่อ', 'err'); return; }
-  if (!pin) { setStatus('⚠️ กรุณากรอก PIN', 'err'); return; }
-  if (!navigator.geolocation) { setStatus('❌ อุปกรณ์ไม่รองรับ GPS', 'err'); return; }
-
   btn.disabled = true;
-  setGpsStatus('loading', 'กำลังระบุตำแหน่ง...');
+  setStatus('⏳ กำลังบันทึก...', 'info');
 
-// ✅ ใช้ Watch Position ที่เก็บไว้
-btn.disabled = true;
-setStatus('⏳ กำลังบันทึก...', 'info');
-
-// ถ้ามีตำแหน่งแม่นยำอยู่แล้ว → ใช้เลย
-let pos = _watchBestPos;
-
-// ถ้ายังไม่มี หรือ accuracy แย่ → รอสักครู่
-if (!pos || pos.acc > 100) {
-  setStatus('⏳ รอ GPS...', 'info');
-  pos = await waitForGoodPosition(navigator.onLine ? 15000 : 60000);
-}
-
-// ถ้ายังไม่ได้ → ใช้ตำแหน่งล่าสุดที่บันทึกไว้
-if (!pos) {
-  pos = getLastPosition();
-  if (pos) {
-    pos.acc = pos.acc || 999;
-    pos.reusedPosition = true;
+  let pos = _watchBestPos;
+  if (!pos || pos.acc > 100) {
+    setStatus('⏳ รอ GPS...', 'info');
+    pos = await waitForGoodPosition(navigator.onLine ? 15000 : 60000);
   }
-}
+  if (!pos) pos = getLastPosition();
+  if (!pos) {
+    setStatus('❌ ไม่สามารถระบุตำแหน่งได้\n📵 ลองยืนที่โล่งแล้วกดใหม่', 'err');
+    setGpsStatus('bad', 'ไม่สามารถระบุตำแหน่ง');
+    btn.disabled = false;
+    return;
+  }
 
-// ถ้าไม่มีเลย → error
-if (!pos) {
-  setStatus('❌ ไม่สามารถระบุตำแหน่งได้\n📵 ลองยืนที่โล่งแล้วกดใหม่', 'err');
-  setGpsStatus('bad', 'ไม่สามารถระบุตำแหน่ง');
+  const q = gpsQuality(Math.round(pos.acc));
+  setGpsStatus(q.state, q.text);
+
+  const scanData = {
+    cp: currentCp,
+    name: session.name,
+    pin: session.pin,
+    lat: pos.lat,
+    lng: pos.lng,
+    acc: pos.acc,
+    ts: Date.now()
+  };
+
+  await GTDB.addScanToQueue(scanData);
+  await updateQueueBadge();
+
+  setStatus('📦 บันทึกแล้ว · จะ sync อัตโนมัติ', 'ok');
   btn.disabled = false;
-  const btnLast = document.getElementById('btnLastPos');
-  if (btnLast) btnLast.style.display = 'block';
-  return;
+  if (navigator.onLine) setTimeout(syncQueue, 500);
 }
 
-// มีตำแหน่ง → บันทึก
-const acc = Math.round(pos.acc);
-const q = gpsQuality(acc);
-setGpsStatus(q.state, q.text);
-
-const scanData = {
-  cp: currentCp,
-  name: name,
-  pin: pin,
-  lat: pos.lat,
-  lng: pos.lng,
-  acc: pos.acc,
-  ts: Date.now(),
-  confirmed: isConfirmed,
-  reusedPosition: pos.reusedPosition || false
-};
-
-await GTDB.addScanToQueue(scanData);
-await updateQueueBadge();
-
-const msg = pos.reusedPosition 
-  ? '📦 บันทึกด้วยตำแหน่งล่าสุด · จะ sync อัตโนมัติ'
-  : '📦 บันทึกแล้ว · จะ sync อัตโนมัติ';
-setStatus(msg, pos.reusedPosition ? 'warn' : 'ok');
-document.getElementById('pin').value = '';
-btn.disabled = false;
-
-if (navigator.onLine) setTimeout(syncQueue, 500);
-}
-
-// ================= STATUS =================
 function setStatus(msg, cls) {
   const s = document.getElementById('status');
   s.innerText = msg;
@@ -690,16 +688,12 @@ function setStatus(msg, cls) {
 
 // ================= SYNC =================
 let _syncing = false;
-
 async function syncQueue() {
   if (_syncing || !navigator.onLine) return;
-
   const queue = await GTDB.getAllQueuedScans();
   if (queue.length === 0) return;
-
   _syncing = true;
   let done = 0, failed = 0;
-
   for (const item of queue) {
     try {
       await fetch(API_URL, {
@@ -710,15 +704,10 @@ async function syncQueue() {
       });
       await GTDB.deleteQueuedScan(item.id);
       done++;
-    } catch (err) {
-      console.error('Sync fail:', err);
-      failed++;
-    }
+    } catch (err) { failed++; }
   }
-
   _syncing = false;
   await updateQueueBadge();
-
   if (done > 0) toast('✅ Sync ' + done + ' รายการ');
 }
 
@@ -729,69 +718,10 @@ async function updateQueueBadge() {
   if (count > 0) {
     badge.innerText = '📦 ค้างส่ง ' + count + ' รายการ';
     badge.style.display = 'block';
-    badge.style.cssText += '; display:block;';
   } else {
     badge.style.display = 'none';
   }
 }
-
-  // ================= USE LAST POSITION =================
-let _lastKnownPosition = null;
-
-// ฟังตำแหน่งที่สำเร็จ → เก็บไว้
-function saveLastPosition(lat, lng, acc) {
-  try {
-    localStorage.setItem('guardTour_lastPos', JSON.stringify({
-      lat, lng, acc, ts: Date.now()
-    }));
-  } catch (e) {}
-}
-
-function getLastPosition() {
-  try {
-    const s = localStorage.getItem('guardTour_lastPos');
-    if (!s) return null;
-    const data = JSON.parse(s);
-    // เก็บได้ไม่เกิน 30 นาที
-    if (Date.now() - data.ts > 30 * 60 * 1000) return null;
-    return data;
-  } catch (e) {
-    return null;
-  }
-}
-
-function useLastPosition() {
-  const last = getLastPosition();
-  if (!last) {
-    toast('❌ ไม่มีตำแหน่งที่บันทึกไว้');
-    return;
-  }
-
-  const ageMin = Math.round((Date.now() - last.ts) / 60000);
-  if (!confirm('ใช้ตำแหน่งที่บันทึกไว้ ' + ageMin + ' นาทีที่แล้ว?\n\nพิกัด: ' 
-    + last.lat.toFixed(6) + ', ' + last.lng.toFixed(6) 
-    + '\nความแม่นยำ: ±' + Math.round(last.acc) + ' ม.')) return;
-
-  // บันทึกด้วยตำแหน่งเดิม
-  (async () => {
-    await GTDB.addScanToQueue({
-      cp: currentCp,
-      name: document.getElementById('name').value.trim(),
-      pin: document.getElementById('pin').value.trim(),
-      lat: last.lat,
-      lng: last.lng,
-      acc: last.acc,
-      ts: Date.now(),
-      confirmed: false,
-      reusedPosition: true
-    });
-    await updateQueueBadge();
-    setStatus('📦 บันทึกด้วยตำแหน่งล่าสุดแล้ว', 'warn');
-    document.getElementById('pin').value = '';
-    if (navigator.onLine) setTimeout(syncQueue, 500);
-  })();
-}
-
 
 // ================= TOAST =================
 function toast(msg) {
@@ -801,33 +731,30 @@ function toast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ================= PWA SERVICE WORKER =================
+// ================= CLEANUP =================
+window.addEventListener('beforeunload', () => { stopWatchGPS(); });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && !_watchId && currentCp) startWatchGPS();
+});
+
+// ================= SW =================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log('✅ SW registered'))
-      .catch(err => console.error('❌ SW failed:', err));
+      .then(reg => {
+        reg.update();
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              setTimeout(() => window.location.reload(true), 500);
+            }
+          });
+        });
+      }).catch(err => console.error('SW:', err));
   });
 }
-
-// ✅ หยุด Watch เมื่อปิด tab
-window.addEventListener('beforeunload', () => {
-  stopWatchGPS();
-});
-
-// ✅ หยุด Watch เมื่อเปลี่ยน tab
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    // ไม่ต้องหยุด — ให้ทำงานเบื้องหลัง
-  } else {
-    // กลับมา → เช็คว่ายัง watch อยู่ไหม
-    if (!_watchId && currentCp) {
-      startWatchGPS();
-    }
-  }
-});
-
-console.log('✅ App loaded');
+console.log('✅ App v2.0 loaded');
 </script>
 </body>
 </html>
