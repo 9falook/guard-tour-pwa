@@ -45,20 +45,33 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // API ไป Apps Script → ไม่แคช
+  // ✅ กรองเฉพาะ http/https เท่านั้น
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;   // ปล่อยผ่าน (เช่น chrome-extension://)
+  }
+
+  // ✅ ไม่แคช Apps Script API
   if (url.hostname.includes('script.google.com')) {
-    return;   // ปล่อยให้ browser จัดการ
+    return;
+  }
+
+  // ✅ ไม่แคช method อื่นนอกจาก GET
+  if (event.request.method !== 'GET') {
+    return;
   }
 
   // Static assets → cache-first
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
+
       return fetch(event.request).then((response) => {
-        // แคชเพิ่มเติมสำหรับ font
-        if (event.request.method === 'GET' && response.status === 200) {
+        // ✅ ตรวจ response ก่อนแคช
+        if (response && response.status === 200 && response.type === 'basic') {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(event.request, clone))
+            .catch(err => console.warn('[SW] cache.put skip:', err));
         }
         return response;
       }).catch(() => {
