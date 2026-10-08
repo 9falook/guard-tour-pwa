@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#00d4ff">
+
+<!-- PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Guard Tour">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+
+<title>Guard Tour · บันทึกการตรวจ</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <div class="top-bar">
+    <div>
+      <span class="beta-chip">🧪 BETA</span>
+      <span class="connection-status" id="connStatus" style="margin-left: 6px;">
+        <span class="dot"></span>
+        <span id="connText">กำลังโหลด...</span>
+      </span>
+    </div>
+    <div class="clock">
+      <span id="clock">--:--:--</span>
+    </div>
+  </div>
+
+  <div class="card">
+
+    <!-- CHECKPOINT -->
+    <div class="cp-header">
+      <div class="cp-icon">
+        <img src="./icons/icon-192.png" alt="โลโก้">
+      </div>
+      <div class="cp-info">
+        <div class="cp-code" id="cpCode">CP01</div>
+        <div class="cp-name" id="cpName">กำลังโหลด...</div>
+      </div>
+    </div>
+
+    <!-- SHIFT BADGE -->
+    <div class="shift-badge" id="shiftBadge">
+      <span class="dot"></span>
+      <span id="shiftText">กำลังโหลด...</span>
+    </div>
+
+    <!-- NAME -->
+    <div class="field">
+      <label>ชื่อ รปภ.</label>
+      <input id="name" placeholder="กรอกชื่อของคุณ" autocomplete="off" autocapitalize="off">
+    </div>
+
+    <!-- PIN -->
+    <div class="field">
+      <label>PIN (4 หลัก)</label>
+      <input id="pin" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••" autocomplete="off">
+    </div>
+
+    <!-- GPS BAR -->
+    <div class="gps-bar" id="gpsBar">
+      <span id="gpsIcon">📡</span>
+      <span class="spinner" id="gpsSpinner" style="display:none"></span>
+      <span id="gpsText">กดปุ่มเพื่อระบุตำแหน่ง</span>
+    </div>
+
+    <!-- SUBMIT -->
+    <button class="btn-submit" id="btn" onclick="saveScan(false)">
+      ✅ บันทึกการตรวจ
+    </button>
+
+    <!-- STATUS -->
+    <div id="status"></div>
+
+    <!-- QUEUE BADGE -->
+    <div id="queueBadge"></div>
+
+  </div>
+
+  <div class="footer">
+    Guard Tour PWA · v1.0
+  </div>
+
+</div>
+
+<!-- SCRIPTS -->
+<script src="./js/db.js"></script>
+<script src="./js/app.js"></script>
+
+<!-- SERVICE WORKER -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('✅ SW registered:', reg.scope))
+      .catch(err => console.error('❌ SW failed:', err));
+  });
+}
+</script>
+
+</body>
+</html>
