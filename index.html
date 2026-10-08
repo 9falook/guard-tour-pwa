@@ -233,6 +233,12 @@ let cpInfo = null;
 let scanner = null;
 let isScanning = false;
 
+// ✅ Watch GPS
+let _watchId = null;
+let _watchBestPos = null;
+let _watchStartTime = null;
+let _watchUpdateTimer = null;
+
 // ================= INIT =================
 document.addEventListener('DOMContentLoaded', () => {
   initClock();
@@ -283,19 +289,22 @@ function parseUrl() {
   const cp = params.get('cp');
 
   if (cp) {
-    // มี ?cp=XX → แสดง form
-    currentCp = cp.toUpperCase();
-    showForm();
-    loadCpInfo();
-    updateShiftBadge();
-    setupFormListeners();
-    updateQueueBadge();
-    setInterval(syncQueue, 60000);
-    setTimeout(syncQueue, 2000);
-  } else {
-    // ไม่มี → แสดง scanner
-    showScanner();
-  }
+  currentCp = cp.toUpperCase();
+  showForm();
+  loadCpInfo();
+  updateShiftBadge();
+  setupFormListeners();
+  updateQueueBadge();
+  setInterval(syncQueue, 60000);
+  setTimeout(syncQueue, 2000);
+  
+  // ✅ เริ่ม Watch GPS ทันที
+  startWatchGPS();
+} else {
+  showScanner();
+  // หยุด watch ถ้ากลับไปหน้า scanner
+  stopWatchGPS();
+}
 }
 
 // ================= SCANNER =================
@@ -304,6 +313,9 @@ function showScanner() {
   document.getElementById('formView').classList.remove('show');
   document.getElementById('camStatus').style.display = 'block';
   document.getElementById('reader').style.display = 'none';
+
+  // ✅ หยุด Watch GPS
+  stopWatchGPS();
 
   if (isScanning) return;
 
@@ -473,6 +485,96 @@ function setupFormListeners() {
   });
 }
 
+// ================= WATCH GPS =================
+/**
+ * เริ่มติดตาม GPS ต่อเนื่อง — เก็บตำแหน่งที่ดีที่สุดไว้
+ */
+function startWatchGPS() {
+  if (!navigator.geolocation) {
+    setGpsStatus('bad', 'อุปกรณ์ไม่รองรับ GPS');
+    return;
+  }
+
+  // หยุด watch เก่าก่อน
+  stopWatchGPS();
+
+  _watchBestPos = null;
+  _watchStartTime = Date.now();
+
+  const isOnline = navigator.onLine;
+  setGpsStatus('loading', isOnline
+    ? '🛰️ กำลังค้นหาดาวเทียม...'
+    : '📵 โหมดออฟไลน์ — GPS ใช้เวลา 30-90 วินาที');
+
+  _watchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      const acc = Math.round(pos.coords.accuracy);
+      const elapsed = Math.round((Date.now() - _watchStartTime) / 1000);
+
+      // เก็บตำแหน่งที่ดีที่สุด (accuracy ต่ำสุด)
+      if (!_watchBestPos || acc < _watchBestPos.acc) {
+        _watchBestPos = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          acc: pos.coords.accuracy,
+          ts: Date.now()
+        };
+        // บันทึกลง localStorage ด้วย
+        saveLastPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+      }
+
+      // แสดงสถานะ
+      const q = gpsQuality(acc);
+      setGpsStatus(q.state, q.text + ' · ' + elapsed + ' วิ');
+    },
+    (err) => {
+      let msg = 'ไม่สามารถระบุตำแหน่ง';
+      if (err.code === 1) msg = 'ไม่อนุญาต GPS — กรุณาเปิดการตั้งค่า';
+      else if (err.code === 2) msg = 'หาตำแหน่งไม่ได้ — ออกที่โล่ง';
+      else if (err.code === 3) msg = 'หมดเวลา';
+      setGpsStatus('bad', msg);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 120000,      // 2 นาที
+      maximumAge: navigator.onLine ? 0 : 60000
+    }
+  );
+}
+
+/**
+ * หยุด Watch GPS
+ */
+function stopWatchGPS() {
+  if (_watchId !== null) {
+    navigator.geolocation.clearWatch(_watchId);
+    _watchId = null;
+  }
+}
+
+/**
+ * รอตำแหน่งที่ดีพอ (accuracy <= 50 ม.) หรือ timeout
+ */
+function waitForGoodPosition(maxWaitMs) {
+  return new Promise((resolve) => {
+    const start = Date.now();
+
+    const check = () => {
+      if (_watchBestPos && _watchBestPos.acc <= 50) {
+        resolve(_watchBestPos);
+        return;
+      }
+      if (Date.now() - start >= maxWaitMs) {
+        resolve(_watchBestPos); // คืนค่าที่ดีที่สุด (อาจ null)
+        return;
+      }
+      setTimeout(check, 500);
+    };
+
+    check();
+  });
+}
+
 // ================= GPS =================
 function setGpsStatus(state, text) {
   const bar = document.getElementById('gpsBar');
@@ -511,77 +613,66 @@ async function saveScan(isConfirmed) {
   btn.disabled = true;
   setGpsStatus('loading', 'กำลังระบุตำแหน่ง...');
 
-  // ✅ Smart GPS — รอนานขึ้นเมื่อไม่มีเน็ต
-const isOnline = navigator.onLine;
-const timeout = isOnline ? 30000 : 90000;   // มีเน็ต 30 วิ / ไม่มีเน็ต 90 วิ
-const maxAge = isOnline ? 0 : 300000;       // offline → ยอมรับตำแหน่งเก่าได้ 5 นาที
+// ✅ ใช้ Watch Position ที่เก็บไว้
+btn.disabled = true;
+setStatus('⏳ กำลังบันทึก...', 'info');
 
-setGpsStatus('loading', isOnline 
-  ? 'กำลังระบุตำแหน่ง...' 
-  : '📵 โหมดออฟไลน์ — GPS อาจใช้เวลา 30-90 วินาที');
+// ถ้ามีตำแหน่งแม่นยำอยู่แล้ว → ใช้เลย
+let pos = _watchBestPos;
 
-navigator.geolocation.getCurrentPosition(
-    async pos => {
-    const acc = Math.round(pos.coords.accuracy);
-    const q = gpsQuality(acc);
-    setGpsStatus(q.state, q.text);
-    
-    // ✅ เก็บตำแหน่งล่าสุดไว้ใช้ fallback
-    saveLastPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-    
-    // ซ่อนปุ่ม "ใช้ตำแหน่งล่าสุด"
-    const btnLast = document.getElementById('btnLastPos');
-    if (btnLast) btnLast.style.display = 'none';
-    
-    const scanData = {
-      cp: currentCp,
-      name: name,
-      pin: pin,
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude,
-      acc: pos.coords.accuracy,
-      ts: Date.now(),
-      confirmed: isConfirmed
-    };
-    
-    await GTDB.addScanToQueue(scanData);
-    await updateQueueBadge();
-    
-    setStatus('📦 บันทึกแล้ว · จะ sync อัตโนมัติ', 'ok');
-    document.getElementById('pin').value = '';
-    btn.disabled = false;
-    
-    if (navigator.onLine) setTimeout(syncQueue, 500);
-  },
-  err => {
-    let msg = 'ไม่สามารถระบุตำแหน่งได้';
-    if (err.code === 1) {
-      msg = 'คุณไม่อนุญาตให้เข้าถึงตำแหน่ง กรุณาเปิดการตั้งค่า';
-    } else if (err.code === 2) {
-      msg = isOnline 
-        ? 'หาตำแหน่งไม่ได้ — ลองออกที่โล่ง'
-        : '📵 โหมดออฟไลน์ — GPS ใช้เวลาเพิ่ม กรุณารอแล้วลองใหม่';
-    } else if (err.code === 3) {
-      msg = isOnline
-        ? 'หมดเวลา 30 วินาที — ลองอีกครั้ง'
-        : '📵 หมดเวลา 90 วินาที — ลองยืนที่โล่งแล้วกดใหม่';
-    }
-        setStatus('❌ ' + msg, 'err');
-    setGpsStatus('bad', 'ไม่สามารถระบุตำแหน่ง');
-    btn.disabled = false;
-    
-    // ✅ แสดงปุ่ม "ใช้ตำแหน่งล่าสุด" ถ้ามีข้อมูล
-    const btnLast = document.getElementById('btnLastPos');
-    if (btnLast && getLastPosition()) {
-      btnLast.style.display = 'block';
-    }
-  },
-  { 
-    enableHighAccuracy: true, 
-    timeout: timeout, 
-    maximumAge: maxAge 
+// ถ้ายังไม่มี หรือ accuracy แย่ → รอสักครู่
+if (!pos || pos.acc > 100) {
+  setStatus('⏳ รอ GPS...', 'info');
+  pos = await waitForGoodPosition(navigator.onLine ? 15000 : 60000);
+}
+
+// ถ้ายังไม่ได้ → ใช้ตำแหน่งล่าสุดที่บันทึกไว้
+if (!pos) {
+  pos = getLastPosition();
+  if (pos) {
+    pos.acc = pos.acc || 999;
+    pos.reusedPosition = true;
   }
-);
+}
+
+// ถ้าไม่มีเลย → error
+if (!pos) {
+  setStatus('❌ ไม่สามารถระบุตำแหน่งได้\n📵 ลองยืนที่โล่งแล้วกดใหม่', 'err');
+  setGpsStatus('bad', 'ไม่สามารถระบุตำแหน่ง');
+  btn.disabled = false;
+  const btnLast = document.getElementById('btnLastPos');
+  if (btnLast) btnLast.style.display = 'block';
+  return;
+}
+
+// มีตำแหน่ง → บันทึก
+const acc = Math.round(pos.acc);
+const q = gpsQuality(acc);
+setGpsStatus(q.state, q.text);
+
+const scanData = {
+  cp: currentCp,
+  name: name,
+  pin: pin,
+  lat: pos.lat,
+  lng: pos.lng,
+  acc: pos.acc,
+  ts: Date.now(),
+  confirmed: isConfirmed,
+  reusedPosition: pos.reusedPosition || false
+};
+
+await GTDB.addScanToQueue(scanData);
+await updateQueueBadge();
+
+const msg = pos.reusedPosition 
+  ? '📦 บันทึกด้วยตำแหน่งล่าสุด · จะ sync อัตโนมัติ'
+  : '📦 บันทึกแล้ว · จะ sync อัตโนมัติ';
+setStatus(msg, pos.reusedPosition ? 'warn' : 'ok');
+document.getElementById('pin').value = '';
+btn.disabled = false;
+
+if (navigator.onLine) setTimeout(syncQueue, 500);
 }
 
 // ================= STATUS =================
@@ -712,6 +803,23 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('❌ SW failed:', err));
   });
 }
+
+// ✅ หยุด Watch เมื่อปิด tab
+window.addEventListener('beforeunload', () => {
+  stopWatchGPS();
+});
+
+// ✅ หยุด Watch เมื่อเปลี่ยน tab
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // ไม่ต้องหยุด — ให้ทำงานเบื้องหลัง
+  } else {
+    // กลับมา → เช็คว่ายัง watch อยู่ไหม
+    if (!_watchId && currentCp) {
+      startWatchGPS();
+    }
+  }
+});
 
 console.log('✅ App loaded');
 </script>
