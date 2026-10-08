@@ -242,19 +242,14 @@ async function syncQueue() {
 
   for (const item of queue) {
     try {
-      const res = await postToAPI('addScan', item);
-      if (res && res.ok) {
-        await GTDB.deleteQueuedScan(item.id);
-        done++;
-      } else {
-        console.warn('Rejected:', res.msg);
-        // ถ้าโดนปฏิเสธ (PIN ผิด, ซ้ำ) → ลบออก
-        if (res && (res.reject || res.duplicate)) {
-          await GTDB.deleteQueuedScan(item.id);
-        }
-        failed++;
-      }
+      await postToAPI('addScan', item);
+      // ✅ ด้วย no-cors เราไม่เห็น response → ถือว่าส่งสำเร็จ
+      // → เก็บ history + ลบออกจาก queue
+      await GTDB.addToHistory(item);
+      await GTDB.deleteQueuedScan(item.id);
+      done++;
     } catch (err) {
+      // ✅ Network error เท่านั้น (ไม่ใช่ reject) → เก็บไว้ลองใหม่
       console.error('Sync error:', err);
       failed++;
     }
@@ -263,14 +258,9 @@ async function syncQueue() {
   _syncing = false;
   await updateQueueBadge();
 
-  if (done > 0) {
-    setStatus('✅ Sync ' + done + ' รายการสำเร็จ', 'ok');
-  }
-  if (failed > 0) {
-    setStatus('⚠️ Sync ล้มเหลว ' + failed + ' รายการ', 'warn');
-  }
+  if (done > 0) setStatus('✅ Sync ' + done + ' รายการสำเร็จ', 'ok');
+  if (failed > 0) setStatus('⚠️ Sync ล้มเหลว ' + failed + ' รายการ', 'warn');
 }
-
 async function manualSync() {
   if (!navigator.onLine) {
     setStatus('📵 ยังไม่มีเน็ต', 'warn');
