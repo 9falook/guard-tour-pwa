@@ -4,19 +4,111 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#00d4ff">
-
-<!-- PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Guard Tour">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link rel="icon" type="image/png" href="./icons/icon-192.png">
-
-<title>Guard Tour · บันทึกการตรวจ</title>
-
+<title>Guard Tour</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./css/style.css">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  /* ===== SCANNER MODE ===== */
+  #scannerView { display: none; }
+  #scannerView.show { display: block; }
+  #formView { display: none; }
+  #formView.show { display: block; }
+
+  .scanner-wrap {
+    width: 100%; max-width: 440px;
+    margin: 8px auto 0;
+  }
+  .scanner-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+    border: 1px solid var(--border);
+    border-radius: 22px; padding: 22px 20px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    position: relative; overflow: hidden;
+  }
+  .scanner-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    opacity: 0.6;
+  }
+  .scanner-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 15px; font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .scanner-title .icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, rgba(0,212,255,0.2), rgba(168,85,247,0.2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .scanner-sub {
+    font-size: 12px; color: var(--text-dim);
+    margin-bottom: 16px; padding-left: 46px;
+  }
+  #reader {
+    width: 100%; border-radius: 14px; overflow: hidden;
+    background: #000;
+  }
+  #reader video { border-radius: 14px; }
+  .scanner-hint {
+    margin-top: 14px; padding: 12px 14px;
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 10px;
+    font-size: 12px; color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .scanner-hint b { color: var(--primary); }
+
+  /* Camera loading / error */
+  .cam-status {
+    text-align: center; padding: 30px 20px;
+    color: var(--text-dim); font-size: 13px;
+  }
+  .cam-status .big { font-size: 40px; margin-bottom: 12px; }
+
+  /* Manual cp button */
+  .btn-manual {
+    width: 100%; padding: 12px; margin-top: 12px;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .btn-manual:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+  /* Change CP link */
+  .change-cp {
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-top: 12px; font-size: 12px;
+    color: var(--text-dim); text-decoration: none;
+    cursor: pointer;
+  }
+  .change-cp:hover { color: var(--primary); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.9); color: white;
+    padding: 12px 20px; border-radius: 12px;
+    font-size: 13px; font-weight: 600;
+    z-index: 9999; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+    border: 1px solid rgba(255,255,255,0.1);
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; }
+</style>
 </head>
 <body>
 
@@ -28,7 +120,7 @@
       <span class="beta-chip">🧪 BETA</span>
       <span class="connection-status" id="connStatus" style="margin-left: 6px;">
         <span class="dot"></span>
-        <span id="connText">กำลังโหลด...</span>
+        <span id="connText">โหลด...</span>
       </span>
     </div>
     <div class="clock">
@@ -36,77 +128,497 @@
     </div>
   </div>
 
-  <div class="card">
-
-    <!-- CHECKPOINT -->
-    <div class="cp-header">
-      <div class="cp-icon">
-        <img src="./icons/icon-192.png" alt="โลโก้">
+  <!-- ============ SCANNER VIEW ============ -->
+  <div id="scannerView" class="scanner-wrap">
+    <div class="scanner-card">
+      <div class="scanner-title">
+        <span class="icon">📷</span>
+        <span>สแกน QR ที่จุดตรวจ</span>
       </div>
-      <div class="cp-info">
-        <div class="cp-code" id="cpCode">CP01</div>
-        <div class="cp-name" id="cpName">กำลังโหลด...</div>
+      <div class="scanner-sub">หันกล้องไปที่ QR Code ที่ติดไว้ที่จุดตรวจ</div>
+
+      <div id="reader"></div>
+
+      <div id="camStatus" class="cam-status" style="display:none;">
+        <div class="big">📷</div>
+        <div id="camStatusText">กำลังเปิดกล้อง...</div>
+      </div>
+
+      <button class="btn-manual" onclick="promptManualCp()">
+        ⌨️ กรอกจุดตรวจเอง (ถ้ากล้องใช้ไม่ได้)
+      </button>
+
+      <div class="scanner-hint">
+        💡 <b>วิธีใช้:</b> สแกน QR ที่จุดตรวจ → ระบบจะเปิดหน้าบันทึกอัตโนมัติ
       </div>
     </div>
-
-    <!-- SHIFT BADGE -->
-    <div class="shift-badge" id="shiftBadge">
-      <span class="dot"></span>
-      <span id="shiftText">กำลังโหลด...</span>
-    </div>
-
-    <!-- NAME -->
-    <div class="field">
-      <label>ชื่อ รปภ.</label>
-      <input id="name" placeholder="กรอกชื่อของคุณ" autocomplete="off" autocapitalize="off">
-    </div>
-
-    <!-- PIN -->
-    <div class="field">
-      <label>PIN (4 หลัก)</label>
-      <input id="pin" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••" autocomplete="off">
-    </div>
-
-    <!-- GPS BAR -->
-    <div class="gps-bar" id="gpsBar">
-      <span id="gpsIcon">📡</span>
-      <span class="spinner" id="gpsSpinner" style="display:none"></span>
-      <span id="gpsText">กดปุ่มเพื่อระบุตำแหน่ง</span>
-    </div>
-
-    <!-- SUBMIT -->
-    <button class="btn-submit" id="btn" onclick="saveScan(false)">
-      ✅ บันทึกการตรวจ
-    </button>
-
-    <!-- STATUS -->
-    <div id="status"></div>
-
-    <!-- QUEUE BADGE -->
-    <div id="queueBadge"></div>
-
   </div>
 
-  <div class="footer">
-    Guard Tour PWA · v1.0
+  <!-- ============ FORM VIEW ============ -->
+  <div id="formView" class="scanner-wrap">
+    <div class="card">
+
+      <!-- CHECKPOINT INFO -->
+      <div class="cp-header">
+        <div class="cp-icon"><img src="./icons/icon-192.png" alt="โลโก้"></div>
+        <div class="cp-info">
+          <div class="cp-code" id="cpCode">--</div>
+          <div class="cp-name" id="cpName">กำลังโหลด...</div>
+        </div>
+      </div>
+
+      <!-- SHIFT BADGE -->
+      <div class="shift-badge" id="shiftBadge">
+        <span class="dot"></span>
+        <span id="shiftText">กำลังโหลด...</span>
+      </div>
+
+      <!-- NAME -->
+      <div class="field">
+        <label>ชื่อ รปภ.</label>
+        <input id="name" placeholder="กรอกชื่อของคุณ" autocomplete="off" autocapitalize="off">
+      </div>
+
+      <!-- PIN -->
+      <div class="field">
+        <label>PIN (4 หลัก)</label>
+        <input id="pin" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••" autocomplete="off">
+      </div>
+
+      <!-- GPS BAR -->
+      <div class="gps-bar" id="gpsBar">
+        <span id="gpsIcon">📡</span>
+        <span class="spinner" id="gpsSpinner" style="display:none"></span>
+        <span id="gpsText">กดปุ่มเพื่อระบุตำแหน่ง</span>
+      </div>
+
+      <!-- SUBMIT -->
+      <button class="btn-submit" id="btn" onclick="saveScan(false)">
+        ✅ บันทึกการตรวจ
+      </button>
+
+      <!-- STATUS -->
+      <div id="status"></div>
+
+      <!-- QUEUE -->
+      <div id="queueBadge"></div>
+
+      <a class="change-cp" onclick="showScanner()">🔄 เปลี่ยนจุดตรวจ (สแกนใหม่)</a>
+
+    </div>
   </div>
+
+  <div class="footer">Guard Tour PWA · v1.0</div>
 
 </div>
 
+<div class="toast" id="toast"></div>
+
 <!-- SCRIPTS -->
 <script src="./js/db.js"></script>
-<script src="./js/app.js"></script>
-
-<!-- SERVICE WORKER -->
 <script>
+// ============================================================
+//  Guard Tour PWA — Single File App
+// ============================================================
+
+// ⚠️ แก้ URL นี้เป็น Apps Script Web App URL ของคุณ
+const API_URL = 'https://script.google.com/macros/s/AKfycbxrz9sfLjPjdWFSvzUBhkYDe54-BG-bWOUUnmw6XKRDajoTbSVhUdHg3C12ZcwZXQLXDQ/exec';
+
+// ================= STATE =================
+let currentCp = null;
+let cpInfo = null;
+let scanner = null;
+let isScanning = false;
+
+// ================= INIT =================
+document.addEventListener('DOMContentLoaded', () => {
+  initClock();
+  initConnection();
+  parseUrl();
+});
+
+// ================= CLOCK =================
+function initClock() {
+  const tick = () => {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('clock').innerText =
+      pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ================= CONNECTION =================
+function initConnection() {
+  const update = () => {
+    const status = document.getElementById('connStatus');
+    const text = document.getElementById('connText');
+    if (navigator.onLine) {
+      status.classList.remove('offline');
+      text.innerText = 'ออนไลน์';
+    } else {
+      status.classList.add('offline');
+      text.innerText = 'ออฟไลน์';
+    }
+  };
+  window.addEventListener('online', () => {
+    update();
+    toast('🌐 เน็ตกลับมา — กำลัง sync...');
+    setTimeout(syncQueue, 1000);
+  });
+  window.addEventListener('offline', () => {
+    update();
+    toast('📵 เน็ตหลุด — บันทึกไว้ในเครื่อง');
+  });
+  update();
+}
+
+// ================= PARSE URL =================
+function parseUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const cp = params.get('cp');
+
+  if (cp) {
+    // มี ?cp=XX → แสดง form
+    currentCp = cp.toUpperCase();
+    showForm();
+    loadCpInfo();
+    updateShiftBadge();
+    setupFormListeners();
+    updateQueueBadge();
+    setInterval(syncQueue, 60000);
+    setTimeout(syncQueue, 2000);
+  } else {
+    // ไม่มี → แสดง scanner
+    showScanner();
+  }
+}
+
+// ================= SCANNER =================
+function showScanner() {
+  document.getElementById('scannerView').classList.add('show');
+  document.getElementById('formView').classList.remove('show');
+  document.getElementById('camStatus').style.display = 'block';
+  document.getElementById('reader').style.display = 'none';
+
+  if (isScanning) return;
+
+  Html5Qrcode.getCameras().then(devices => {
+    if (!devices || devices.length === 0) {
+      document.getElementById('camStatusText').innerText = 'ไม่พบกล้องในเครื่องนี้';
+      return;
+    }
+
+    // ใช้กล้องหลังเป็นค่าเริ่มต้น
+    let cameraId = devices[0].id;
+    for (const d of devices) {
+      if (d.label.toLowerCase().includes('back') ||
+          d.label.toLowerCase().includes('rear') ||
+          d.label.toLowerCase().includes('หลัง')) {
+        cameraId = d.id;
+        break;
+      }
+    }
+
+    scanner = new Html5Qrcode("reader");
+    document.getElementById('camStatus').style.display = 'none';
+    document.getElementById('reader').style.display = 'block';
+
+    scanner.start(
+      cameraId,
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      onScanSuccess,
+      () => {} // ignore errors
+    ).then(() => {
+      isScanning = true;
+    }).catch(err => {
+      document.getElementById('camStatus').style.display = 'block';
+      document.getElementById('camStatusText').innerText =
+        'เปิดกล้องไม่ได้: ' + err.message;
+    });
+  }).catch(err => {
+    document.getElementById('camStatus').style.display = 'block';
+    document.getElementById('camStatusText').innerText =
+      'ไม่สามารถเข้าถึงกล้องได้ — กรุณาอนุญาตสิทธิ์';
+  });
+}
+
+function showForm() {
+  document.getElementById('scannerView').classList.remove('show');
+  document.getElementById('formView').classList.add('show');
+
+  if (scanner && isScanning) {
+    scanner.stop().then(() => {
+      isScanning = false;
+    }).catch(() => { isScanning = false; });
+  }
+}
+
+function onScanSuccess(decodedText) {
+  // QR จะมี URL เป็น ?cp=CP02
+  let cp = null;
+  try {
+    const url = new URL(decodedText);
+    cp = url.searchParams.get('cp');
+  } catch (e) {
+    // เผื่อ QR เป็น text ตรงๆ เช่น "CP02"
+    if (/^CP\d+$/i.test(decodedText.trim())) {
+      cp = decodedText.trim().toUpperCase();
+    }
+  }
+
+  if (!cp) {
+    toast('❌ QR นี้ไม่ใช่จุดตรวจ');
+    return;
+  }
+
+  cp = cp.toUpperCase();
+  toast('✅ พบจุด: ' + cp);
+
+  // หยุดสแกน
+  if (scanner && isScanning) {
+    scanner.stop().then(() => { isScanning = false; }).catch(() => {});
+  }
+
+  // เปลี่ยน URL แล้วโหลดใหม่
+  setTimeout(() => {
+    const newUrl = window.location.pathname + '?cp=' + cp;
+    window.location.href = newUrl;
+  }, 500);
+}
+
+function promptManualCp() {
+  const cp = prompt('กรอกรหัสจุดตรวจ (เช่น CP01):');
+  if (!cp) return;
+  const upper = cp.trim().toUpperCase();
+  if (!/^CP\d+$/i.test(upper)) {
+    toast('❌ รูปแบบไม่ถูกต้อง ตัวอย่าง: CP01');
+    return;
+  }
+  window.location.href = window.location.pathname + '?cp=' + upper;
+}
+
+// ================= LOAD CP INFO =================
+async function loadCpInfo() {
+  document.getElementById('cpCode').innerText = currentCp;
+
+  // ลองอ่านจาก cache ก่อน
+  const cpMap = await GTDB.getMeta('cpMap') || {};
+  if (cpMap[currentCp]) {
+    document.getElementById('cpName').innerText = cpMap[currentCp];
+  } else {
+    document.getElementById('cpName').innerText = currentCp;
+  }
+
+  // โหลดจาก API ถ้าออนไลน์
+  if (navigator.onLine) {
+    fetchCpMap();
+  }
+}
+
+async function fetchCpMap() {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getCheckpoints' })
+    });
+  } catch (e) {}
+}
+
+// ================= SHIFT BADGE =================
+function updateShiftBadge() {
+  const d = new Date();
+  const m = d.getHours() * 60 + d.getMinutes();
+  const inWindow = m >= 900 || m < 540;
+  let shiftName = 'ระหว่างกะ';
+  if (m >= 0 && m < 510) shiftName = '🌙 กะที่ 1 (00:00-08:30)';
+  else if (m >= 930) shiftName = '🌆 กะที่ 2 (15:30-24:00)';
+
+  const badge = document.getElementById('shiftBadge');
+  const text = document.getElementById('shiftText');
+  if (inWindow) {
+    badge.classList.remove('warn');
+    text.innerHTML = '<b>' + shiftName + '</b> · อยู่ในเวลาสแกน';
+  } else {
+    badge.classList.add('warn');
+    text.innerHTML = '<b>' + shiftName + '</b> · นอกเวลาสแกน';
+  }
+  setTimeout(updateShiftBadge, 30000);
+}
+
+// ================= FORM LISTENERS =================
+function setupFormListeners() {
+  const nameInput = document.getElementById('name');
+  const pinInput = document.getElementById('pin');
+
+  const saved = localStorage.getItem('guardTour_lastName');
+  if (saved) nameInput.value = saved;
+
+  nameInput.addEventListener('input', () => {
+    localStorage.setItem('guardTour_lastName', nameInput.value);
+  });
+
+  nameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') pinInput.focus();
+  });
+
+  pinInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveScan(false);
+  });
+}
+
+// ================= GPS =================
+function setGpsStatus(state, text) {
+  const bar = document.getElementById('gpsBar');
+  const icon = document.getElementById('gpsIcon');
+  const spinner = document.getElementById('gpsSpinner');
+  bar.classList.remove('ok', 'warn', 'bad');
+  if (state === 'loading') {
+    icon.style.display = 'none';
+    spinner.style.display = 'inline-block';
+  } else {
+    icon.style.display = 'inline-block';
+    spinner.style.display = 'none';
+    if (state === 'ok') { icon.innerText = '🟢'; bar.classList.add('ok'); }
+    else if (state === 'warn') { icon.innerText = '🟡'; bar.classList.add('warn'); }
+    else if (state === 'bad') { icon.innerText = '🔴'; bar.classList.add('bad'); }
+  }
+  document.getElementById('gpsText').innerText = text;
+}
+
+function gpsQuality(acc) {
+  if (acc <= 30) return { state: 'ok', text: '±' + acc + ' ม. · แม่นยำสูง' };
+  if (acc <= 100) return { state: 'warn', text: '±' + acc + ' ม. · พอใช้' };
+  return { state: 'bad', text: '±' + acc + ' ม. · คลาดเคลื่อนสูง' };
+}
+
+// ================= SAVE SCAN =================
+async function saveScan(isConfirmed) {
+  const name = document.getElementById('name').value.trim();
+  const pin = document.getElementById('pin').value.trim();
+  const btn = document.getElementById('btn');
+
+  if (!name) { setStatus('⚠️ กรุณากรอกชื่อ', 'err'); return; }
+  if (!pin) { setStatus('⚠️ กรุณากรอก PIN', 'err'); return; }
+  if (!navigator.geolocation) { setStatus('❌ อุปกรณ์ไม่รองรับ GPS', 'err'); return; }
+
+  btn.disabled = true;
+  setGpsStatus('loading', 'กำลังระบุตำแหน่ง...');
+
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      const acc = Math.round(pos.coords.accuracy);
+      const q = gpsQuality(acc);
+      setGpsStatus(q.state, q.text);
+
+      const scanData = {
+        cp: currentCp,
+        name: name,
+        pin: pin,
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        acc: pos.coords.accuracy,
+        ts: Date.now(),
+        confirmed: isConfirmed
+      };
+
+      await GTDB.addScanToQueue(scanData);
+      await updateQueueBadge();
+
+      setStatus('📦 บันทึกแล้ว · จะ sync อัตโนมัติ', 'ok');
+      document.getElementById('pin').value = '';
+      btn.disabled = false;
+
+      if (navigator.onLine) setTimeout(syncQueue, 500);
+    },
+    err => {
+      let msg = 'ไม่สามารถระบุตำแหน่งได้';
+      if (err.code === 1) msg = 'คุณไม่อนุญาตให้เข้าถึงตำแหน่ง';
+      else if (err.code === 2) msg = 'หาตำแหน่งไม่ได้ ลองออกที่โล่ง';
+      else if (err.code === 3) msg = 'หมดเวลาหาตำแหน่ง';
+      setStatus('❌ ' + msg, 'err');
+      setGpsStatus('bad', 'ไม่สามารถระบุตำแหน่ง');
+      btn.disabled = false;
+    },
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+  );
+}
+
+// ================= STATUS =================
+function setStatus(msg, cls) {
+  const s = document.getElementById('status');
+  s.innerText = msg;
+  s.className = 'show ' + (cls || 'info');
+}
+
+// ================= SYNC =================
+let _syncing = false;
+
+async function syncQueue() {
+  if (_syncing || !navigator.onLine) return;
+
+  const queue = await GTDB.getAllQueuedScans();
+  if (queue.length === 0) return;
+
+  _syncing = true;
+  let done = 0, failed = 0;
+
+  for (const item of queue) {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'addScan', data: item })
+      });
+      await GTDB.deleteQueuedScan(item.id);
+      done++;
+    } catch (err) {
+      console.error('Sync fail:', err);
+      failed++;
+    }
+  }
+
+  _syncing = false;
+  await updateQueueBadge();
+
+  if (done > 0) toast('✅ Sync ' + done + ' รายการ');
+}
+
+async function updateQueueBadge() {
+  const count = await GTDB.countQueuedScans();
+  const badge = document.getElementById('queueBadge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.innerText = '📦 ค้างส่ง ' + count + ' รายการ';
+    badge.style.display = 'block';
+    badge.style.cssText += '; display:block;';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ================= TOAST =================
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ================= PWA SERVICE WORKER =================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('✅ SW registered:', reg.scope))
+      .then(() => console.log('✅ SW registered'))
       .catch(err => console.error('❌ SW failed:', err));
   });
 }
-</script>
 
+console.log('✅ App loaded');
+</script>
 </body>
 </html>
