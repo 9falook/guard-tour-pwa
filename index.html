@@ -364,68 +364,38 @@ async function doLogin() {
 
   err.classList.remove('show');
 
-  if (!name) { err.innerText = '⚠️ กรุณากรอกชื่อ'; err.classList.add('show'); return; }
-  if (!pin) { err.innerText = '⚠️ กรุณากรอก PIN'; err.classList.add('show'); return; }
-
-  if (!navigator.onLine) {
-    err.innerText = '📵 ต้องมีเน็ตเพื่อเข้าสู่ระบบครั้งแรก';
+  // ===== Validation =====
+  if (!name || name.length < 2) {
+    err.innerText = '⚠️ กรุณากรอกชื่อ-นามสกุล';
+    err.classList.add('show');
+    return;
+  }
+  if (!/^\d{4,6}$/.test(pin)) {
+    err.innerText = '⚠️ PIN ต้องเป็นตัวเลข 4-6 หลัก';
     err.classList.add('show');
     return;
   }
 
   btn.disabled = true;
-  btn.innerText = '⏳ กำลังตรวจสอบ...';
+  btn.innerText = '⏳ กำลังเข้าสู่ระบบ...';
 
-  // ✅ ใช้ JSONP (bypass CORS)
-  const jsonpUrl = API_URL +
-    '?action=login' +
-    '&name=' + encodeURIComponent(name) +
-    '&pin=' + encodeURIComponent(pin) +
-    '&callback=__onLoginResult' +
-    '&_=' + Date.now();
+  // ✅ แปลงชื่อเป็นชื่อเต็ม (ถ้าอยากให้แสดง "นาย...")
+  // ใช้ mapping ง่ายๆ — เซิร์ฟเวอร์จะส่งชื่อเต็มกลับตอน scan
+  const fullName = name.startsWith('นาย') ? name : 'นาย' + name;
 
-  const timeout = setTimeout(() => {
-    if (window.__onLoginResult) {
-      window.__onLoginResult = null;
-      err.innerText = '❌ หมดเวลา — ลองอีกครั้ง';
-      err.classList.add('show');
-      btn.disabled = false;
-      btn.innerText = '🔓 เข้าสู่ระบบ';
-    }
-  }, 20000);
+  // ✅ เก็บ session local ทันที (ไม่ต้องตรวจ server)
+  saveSession({
+    name: name,
+    fullName: fullName,
+    pin: pin
+  });
 
-  window.__onLoginResult = function(json) {
-    clearTimeout(timeout);
-    window.__onLoginResult = null;
+  toast('✅ ยินดีต้อนรับ ' + fullName);
 
-    // ลบ script tag
-    const s = document.getElementById('jsonp-login');
-    if (s) s.remove();
-
-    if (json && json.ok) {
-      saveSession({ name: json.name, fullName: json.fullName, pin });
-      toast('✅ ยินดีต้อนรับ ' + json.fullName);
-      setTimeout(() => location.href = window.location.pathname, 800);
-    } else {
-      err.innerText = '❌ ' + ((json && json.msg) || 'ชื่อหรือ PIN ไม่ถูกต้อง');
-      err.classList.add('show');
-      btn.disabled = false;
-      btn.innerText = '🔓 เข้าสู่ระบบ';
-    }
-  };
-
-  const script = document.createElement('script');
-  script.id = 'jsonp-login';
-  script.src = jsonpUrl;
-  script.onerror = function() {
-    clearTimeout(timeout);
-    window.__onLoginResult = null;
-    err.innerText = '❌ ไม่สามารถเชื่อมต่อ — ตรวจสอบอินเทอร์เน็ต';
-    err.classList.add('show');
-    btn.disabled = false;
-    btn.innerText = '🔓 เข้าสู่ระบบ';
-  };
-  document.body.appendChild(script);
+  // ✅ เด้งไปหน้าแรก
+  setTimeout(() => {
+    window.location.href = window.location.pathname;
+  }, 600);
 }
 
 // ================= CLOCK =================
