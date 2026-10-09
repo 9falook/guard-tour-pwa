@@ -4,8 +4,9 @@
 
 const DB_NAME = 'GuardTourDB';
 const DB_VERSION = 1;
-const STORE_SCANS = 'scans';   // การสแกนที่รอ sync
-const STORE_META = 'meta';     // ข้อมูลอื่นๆ
+const STORE_SCANS = 'scans';
+const STORE_META = 'meta';
+const STORE_HISTORY = 'history';
 
 let _db = null;
 
@@ -27,9 +28,18 @@ function openDB() {
         store.createIndex('guard', 'name', { unique: false });
       }
 
-      // Store: meta (config, last sync ฯลฯ)
+            // Store: meta (config, last sync ฯลฯ)
       if (!db.objectStoreNames.contains(STORE_META)) {
         db.createObjectStore(STORE_META, { keyPath: 'key' });
+      }
+
+      // ✅ Store: history (ประวัติการสแกนที่ sync แล้ว)
+      if (!db.objectStoreNames.contains(STORE_HISTORY)) {
+        const histStore = db.createObjectStore(STORE_HISTORY, {
+          keyPath: 'id', autoIncrement: true
+        });
+        histStore.createIndex('ts', 'ts', { unique: false });
+        histStore.createIndex('guard', 'name', { unique: false });
       }
     };
 
@@ -139,6 +149,48 @@ async function getMeta(key) {
   });
 }
 
+/*** ---------- HISTORY ---------- ***/
+
+async function addToHistory(scanData) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_HISTORY, 'readwrite');
+    const store = tx.objectStore(STORE_HISTORY);
+    const item = {
+      ...scanData,
+      savedAt: Date.now()
+    };
+    const req = store.add(item);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function getHistory(limit) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_HISTORY, 'readonly');
+    const store = tx.objectStore(STORE_HISTORY);
+    const req = store.getAll();
+    req.onsuccess = () => {
+      const all = req.result.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      resolve(all.slice(0, limit || 50));
+    };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function clearHistory() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_HISTORY, 'readwrite');
+    const store = tx.objectStore(STORE_HISTORY);
+    const req = store.clear();
+    req.onsuccess = () => resolve();
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
 /*** ---------- EXPORT FOR DEBUG ---------- ***/
 
 window.GTDB = {
@@ -149,8 +201,11 @@ window.GTDB = {
   deleteQueuedScan,
   clearQueuedScans,
   getQueuedByGuard,
-  setMeta,
-  getMeta
+    setMeta,
+  getMeta,
+  addToHistory,
+  getHistory,
+  clearHistory
 };
 
 console.log('✅ DB module loaded');
