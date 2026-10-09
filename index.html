@@ -637,7 +637,7 @@ async function saveScan() {
   const q = gpsQuality(Math.round(pos.acc));
   setGpsStatus(q.state, q.text);
 
-  const scanData = {
+    const scanData = {
     cp: currentCp,
     name: session.name,
     pin: session.pin,
@@ -650,7 +650,8 @@ async function saveScan() {
   await GTDB.addScanToQueue(scanData);
   await updateQueueBadge();
 
-  setStatus('📦 บันทึกแล้ว · จะ sync อัตโนมัติ', 'ok');
+  setStatus('📦 บันทึกแล้ว · จะ sync อัตโนมัติ\n' +
+            '⚠️ ถ้า PIN ผิด ระบบจะแจ้งหัวหน้า', 'ok');
   btn.disabled = false;
   if (navigator.onLine) setTimeout(syncQueue, 500);
 }
