@@ -727,18 +727,24 @@ async function syncQueue() {
   if (queue.length === 0) return;
   _syncing = true;
   let done = 0, failed = 0;
-  for (const item of queue) {
+    for (const item of queue) {
     try {
-      await fetch(API_URL, {
+      console.log('📤 Syncing:', item);
+      const res = await fetch(API_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: 'addScan', data: item })
       });
+      console.log('✅ POST sent:', item.id);
       await GTDB.deleteQueuedScan(item.id);
       done++;
-    } catch (err) { failed++; }
+    } catch (err) {
+      console.error('❌ Sync error:', err);
+      failed++;
+    }
   }
+  console.log('📊 Sync done:', done, 'failed:', failed);
   _syncing = false;
   await updateQueueBadge();
   if (done > 0) toast('✅ Sync ' + done + ' รายการ');
