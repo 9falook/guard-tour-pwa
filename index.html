@@ -120,9 +120,44 @@
     color: var(--text-dim); background: rgba(255,255,255,0.04);
     border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
   .btn-manual:hover { background: rgba(255,255,255,0.08); color: var(--text); }
-  .change-cp { display: inline-flex; align-items: center; gap: 5px;
-    margin-top: 12px; font-size: 12px; color: var(--text-dim); cursor: pointer; }
-  .change-cp:hover { color: var(--primary); }
+  .change-cp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 16px 20px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--primary);
+  background: linear-gradient(135deg, rgba(0,212,255,0.12) 0%, rgba(0,212,255,0.04) 100%);
+  border: 1.5px solid rgba(0,212,255,0.4);
+  border-radius: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.25s;
+  box-shadow: 0 4px 12px rgba(0,212,255,0.1);
+}
+.change-cp:active {
+  transform: scale(0.97);
+  background: linear-gradient(135deg, rgba(0,212,255,0.2) 0%, rgba(0,212,255,0.08) 100%);
+}
+.change-cp:hover {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, rgba(0,212,255,0.18) 0%, rgba(0,212,255,0.06) 100%);
+  box-shadow: 0 6px 20px rgba(0,212,255,0.25);
+}
+.change-cp .icon {
+  font-size: 20px;
+  animation: rotateIcon 3s linear infinite;
+}
+@keyframes rotateIcon {
+  0%, 80%, 100% { transform: rotate(0deg); }
+  90% { transform: rotate(180deg); }
+}
 
   /* ===== TOAST ===== */
   .toast {
@@ -237,7 +272,10 @@
       <div id="status"></div>
       <div id="queueBadge"></div>
 
-      <a class="change-cp" onclick="showScanner()">🔄 เปลี่ยนจุดตรวจ (สแกนใหม่)</a>
+      <button class="change-cp" onclick="showScanner()">
+  <span class="icon">🔄</span>
+  <span>เปลี่ยนจุดตรวจ — สแกนใหม่</span>
+</button>
     </div>
   </div>
 
