@@ -272,10 +272,23 @@
       <div id="status"></div>
       <div id="queueBadge"></div>
 
-      <button class="change-cp" onclick="showScanner()">
-  <span class="icon">🔄</span>
-  <span>เปลี่ยนจุดตรวจ — สแกนใหม่</span>
-</button>
+            <button class="change-cp" onclick="showScanner()">
+        <span class="icon">🔄</span>
+        <span>เปลี่ยนจุดตรวจ — สแกนใหม่</span>
+      </button>
+
+      <!-- ===== HISTORY PANEL ===== -->
+      <div id="historyPanel" style="display:none; margin-top: 20px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text);">
+            <span style="font-size: 16px;">📜</span>
+            <span>ประวัติการสแกนล่าสุด</span>
+          </div>
+          <button onclick="clearHistoryConfirm()" style="padding: 4px 10px; font-family: inherit; font-size: 11px; font-weight: 700; color: var(--danger); background: rgba(255,51,102,0.1); border: 1px solid rgba(255,51,102,0.3); border-radius: 6px; cursor: pointer;">ล้าง</button>
+        </div>
+        <div id="historyList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+
     </div>
   </div>
 
@@ -338,12 +351,13 @@ function routePage() {
   const params = new URLSearchParams(window.location.search);
   const cp = params.get('cp');
 
-  if (cp) {
+    if (cp) {
     currentCp = cp.toUpperCase();
     showForm();
     loadCpInfo();
     updateShiftBadge();
     updateQueueBadge();
+    loadHistory();       // ✅ โหลดประวัติตอนเปิดหน้า
     setInterval(syncQueue, 60000);
     setTimeout(syncQueue, 2000);
     startWatchGPS();
@@ -705,8 +719,11 @@ async function saveScan() {
     await GTDB.addScanToQueue(scanData);
   await updateQueueBadge();
 
-  // ✅ แสดง overlay สำเร็จ
+    // ✅ แสดง overlay สำเร็จ
   showSuccessOverlay(currentCp, scanData.ts);
+  
+  // ✅ โหลดประวัติใหม่
+  setTimeout(loadHistory, 3000);
 
   // ✅ สั่นมือถือ
   if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -765,7 +782,8 @@ async function syncQueue() {
   if (queue.length === 0) return;
   _syncing = true;
   let done = 0, failed = 0;
-    for (const item of queue) {
+  
+  for (const item of queue) {
     try {
       console.log('📤 Syncing:', item);
       const res = await fetch(API_URL, {
@@ -775,17 +793,39 @@ async function syncQueue() {
         body: JSON.stringify({ action: 'addScan', data: item })
       });
       console.log('✅ POST sent:', item.id);
+      
+      // ✅ เก็บประวัติการสแกนลง IndexedDB
+      await GTDB.addToHistory({
+        cp: item.cp,
+        name: item.name,
+        ts: item.ts,
+        acc: item.acc,
+        status: 'success',
+        cpName: item.cpName || item.cp
+      });
+      
       await GTDB.deleteQueuedScan(item.id);
       done++;
-    } catch (err) {
+        } catch (err) {
       console.error('❌ Sync error:', err);
       failed++;
     }
   }
+  
+  // ✅ โหลดประวัติใหม่หลัง sync
+  if (done > 0) {
+    setTimeout(loadHistory, 500);
+  }
+  
   console.log('📊 Sync done:', done, 'failed:', failed);
   _syncing = false;
   await updateQueueBadge();
-  if (done > 0) toast('✅ Sync ' + done + ' รายการ');
+  
+  if (done > 0) {
+    toast('✅ Sync ' + done + ' รายการ');
+    // ✅ โหลดประวัติใหม่หลัง sync สำเร็จ
+    setTimeout(loadHistory, 500);
+  }
 }
 
 async function updateQueueBadge() {
@@ -806,6 +846,72 @@ function toast(msg) {
   t.innerText = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ================= HISTORY =================
+async function loadHistory() {
+  const session = getSession();
+  if (!session) return;
+
+  const history = await GTDB.getHistory(50);
+  const myHistory = history.filter(h => h.name === session.name).slice(0, 10);
+
+  const panel = document.getElementById('historyPanel');
+  const list = document.getElementById('historyList');
+  if (!panel || !list) return;
+
+  if (myHistory.length === 0) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = myHistory.map(h => {
+    const d = new Date(h.ts);
+    const pad = n => String(n).padStart(2, '0');
+    const timeStr = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' +
+                    pad(d.getHours()) + ':' + pad(d.getMinutes());
+
+    // สีตามสถานะ
+    let icon = '✅';
+    let color = 'var(--accent)';
+    let bg = 'rgba(0,255,136,0.06)';
+    let borderColor = 'rgba(0,255,136,0.25)';
+    let statusText = '';
+
+    if (h.status === 'rejected') {
+      icon = '❌';
+      color = 'var(--danger)';
+      bg = 'rgba(255,51,102,0.06)';
+      borderColor = 'rgba(255,51,102,0.25)';
+      statusText = h.reason ? ' · ' + h.reason : '';
+    } else if (h.status === 'duplicate') {
+      icon = '⚠️';
+      color = 'var(--warn)';
+      bg = 'rgba(255,181,71,0.06)';
+      borderColor = 'rgba(255,181,71,0.25)';
+      statusText = ' · ซ้ำ';
+    }
+
+    return '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; background:' + bg + '; border:1px solid ' + borderColor + '; border-radius:10px; font-size:12px;">' +
+      '<div style="display:flex; align-items:center; gap:10px; min-width:0;">' +
+        '<span style="font-size:16px;">' + icon + '</span>' +
+        '<div style="min-width:0;">' +
+          '<div style="font-family:\'JetBrains Mono\', monospace; font-weight:700; color:' + color + '; font-size:13px;">' + h.cp + statusText + '</div>' +
+          '<div style="color:var(--text-dim); font-size:11px; margin-top:2px;">' + (h.cpName || h.cp) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="color:var(--text-dim); font-family:\'JetBrains Mono\', monospace; font-size:11px; font-weight:600; white-space:nowrap;">' + timeStr + '</div>' +
+    '</div>';
+  }).join('');
+
+  panel.style.display = 'block';
+}
+
+async function clearHistoryConfirm() {
+  if (!confirm('ล้างประวัติการสแกนทั้งหมด?')) return;
+  await GTDB.clearHistory();
+  document.getElementById('historyPanel').style.display = 'none';
+  toast('🗑️ ล้างประวัติแล้ว');
 }
 
 // ================= CLEANUP =================
