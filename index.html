@@ -448,40 +448,85 @@ async function doLogin() {
 
   err.classList.remove('show');
 
-  // ===== Validation =====
-  if (!name || name.length < 2) {
-    err.innerText = '⚠️ กรุณากรอกชื่อ-นามสกุล';
-    err.classList.add('show');
-    return;
-  }
-  if (!/^\d{4,6}$/.test(pin)) {
-    err.innerText = '⚠️ PIN ต้องเป็นตัวเลข 4-6 หลัก';
+  // ตรวจสอบเบื้องต้น
+  if (!name) { err.innerText = '⚠️ กรุณากรอกชื่อ'; err.classList.add('show'); return; }
+  if (!pin) { err.innerText = '⚠️ กรุณากรอก PIN'; err.classList.add('show'); return; }
+
+  if (!navigator.onLine) {
+    err.innerText = '📵 การเข้าสู่ระบบครั้งแรก ต้องใช้อินเทอร์เน็ต';
     err.classList.add('show');
     return;
   }
 
+  // เปลี่ยนสถานะปุ่ม
   btn.disabled = true;
-  btn.innerText = '⏳ กำลังเข้าสู่ระบบ...';
+  btn.innerText = '⏳ กำลังตรวจสอบ...';
+  err.classList.remove('show');
 
-  // ✅ แปลงชื่อเป็นชื่อเต็ม (ถ้าอยากให้แสดง "นาย...")
-  // ใช้ mapping ง่ายๆ — เซิร์ฟเวอร์จะส่งชื่อเต็มกลับตอน scan
-  const fullName = name.startsWith('นาย') ? name : 'นาย' + name;
+  // เตรียม JSONP
+  const cbName = '__loginCb_' + Date.now();
+  const timeout = setTimeout(() => {
+    cleanup();
+    err.innerText = '❌ หมดเวลาเชื่อมต่อ (20 วิ) กรุณาลองใหม่';
+    err.classList.add('show');
+    btn.disabled = false;
+    btn.innerText = '🔓 เข้าสู่ระบบ';
+  }, 20000);
 
-  // ✅ เก็บ session local ทันที (ไม่ต้องตรวจ server)
-  saveSession({
-    name: name,
-    fullName: fullName,
-    pin: pin
-  });
+  function cleanup() {
+    clearTimeout(timeout);
+    delete window[cbName];
+    const s = document.getElementById('jsonp-login-script');
+    if (s) s.remove();
+  }
 
-  toast('✅ ยินดีต้อนรับ ' + fullName);
+  // Callback ที่รอรับผลจาก Server
+  window[cbName] = function(json) {
+    cleanup();
+    
+    if (json && json.ok) {
+      // บันทึก Session
+      saveSession({ 
+        name: json.name, 
+        fullName: json.fullName, 
+        pin: pin 
+      });
+      
+      toast('✅ ยินดีต้อนรับ ' + json.fullName);
+      
+      // เด้งไปหน้าแรก
+      setTimeout(() => {
+        window.location.href = window.location.pathname;
+      }, 600);
+    } else {
+      // ผิดพลาด
+      err.innerText = '❌ ' + ((json && json.msg) || 'ชื่อหรือ PIN ไม่ถูกต้อง');
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.innerText = '🔓 เข้าสู่ระบบ';
+    }
+  };
 
-  // ✅ เด้งไปหน้าแรก
-  setTimeout(() => {
-    window.location.href = window.location.pathname;
-  }, 600);
+  // สร้าง Script Tag เพื่อยิง JSONP
+  const script = document.createElement('script');
+  script.id = 'jsonp-login-script';
+  script.src = API_URL + 
+    '?action=login' +
+    '&name=' + encodeURIComponent(name) +
+    '&pin=' + encodeURIComponent(pin) +
+    '&callback=' + cbName +
+    '&_=' + Date.now(); // กัน Cache
+    
+  script.onerror = function() {
+    cleanup();
+    err.innerText = '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+    err.classList.add('show');
+    btn.disabled = false;
+    btn.innerText = '🔓 เข้าสู่ระบบ';
+  };
+
+  document.body.appendChild(script);
 }
-
 // ================= CLOCK =================
 function initClock() {
   const tick = () => {
