@@ -786,16 +786,6 @@ function showSuccessOverlay(cp, cpName, ts) {
     overlay.style.display = 'none';
   }, 4000);
 }
-  document.getElementById('successTime').innerText =
-    pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-  document.getElementById('successQueue').innerText = '⏳ กำลัง sync...';
-  
-  overlay.style.display = 'flex';
-  
-  setTimeout(() => {
-    overlay.style.display = 'none';
-  }, 4000);
-}
 
 async function fetchCpMap() {
   if (!navigator.onLine) return;
