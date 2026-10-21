@@ -519,7 +519,8 @@ async function doLogin() {
     
   script.onerror = function() {
     cleanup();
-    err.innerText = '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+    // ✅ บางที Server Crash (500) ก็ทำให้ขึ้นแบบนี้
+    err.innerText = '❌ ชื่อหรือ PIN ไม่ถูกต้อง (หรือระบบขัดข้อง)';
     err.classList.add('show');
     btn.disabled = false;
     btn.innerText = '🔓 เข้าสู่ระบบ';
