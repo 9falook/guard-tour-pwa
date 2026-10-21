@@ -324,6 +324,20 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbxrz9sfLjPjdWFSvzUBhkYDe54-BG-bWOUUnmw6XKRDajoTbSVhUdHg3C12ZcwZXQLXDQ/exec';
 const SESSION_HOURS = 12;
 
+// ✅ ชื่อจุดตรวจ (ตรงกับชีต Checkpoints)
+const CP_MAP = {
+  'CP01': 'สำนักงานหลังใหม่',
+  'CP02': 'ด้านหลังอาคารจัดแสดง (ห้องประชุม)',
+  'CP03': 'ด้านหลังอาคารจัดแสดง (แทงค์น้ำ)',
+  'CP04': 'ด้านข้างอาคารจัดแสดง (ห้องโบราณวัตถุ)',
+  'CP05': 'ประตูทางเข้าอาคารจัดแสดง',
+  'CP06': 'ด้านข้างอาคารจัดแสดง (ห้องประชาสัมพันธ์)'
+};
+
+function getCpName(cp) {
+  return CP_MAP[String(cp).toUpperCase()] || cp;
+}
+
 let currentCp = null;
 let scanner = null;
 let isScanning = false;
@@ -568,7 +582,7 @@ function promptManualCp() {
 // ================= CP INFO =================
 async function loadCpInfo() {
   document.getElementById('cpCode').innerText = currentCp;
-  document.getElementById('cpName').innerText = currentCp;
+  document.getElementById('cpName').innerText = getCpName(currentCp);
 }
 
 // ================= SHIFT =================
@@ -707,8 +721,8 @@ async function saveScan() {
   const q = gpsQuality(Math.round(pos.acc));
   setGpsStatus(q.state, q.text);
 
-      // ✅ ดึงชื่อจุดจากหน้าเว็บ (ที่โหลดมาจาก API แล้ว)
-  const cpName = document.getElementById('cpName').innerText || currentCp;
+  // ✅ ชื่อจุดจาก CP_MAP
+  const cpName = getCpName(currentCp);
 
   const scanData = {
     cp: currentCp,
@@ -754,14 +768,24 @@ async function saveScan() {
   }
 }
 
-// ✅ ฟังก์ชันแสดง overlay (เพิ่ม cpName)
+// ✅ ฟังก์ชันแสดง overlay (ใช้ CP_MAP)
 function showSuccessOverlay(cp, cpName, ts) {
   const overlay = document.getElementById('successOverlay');
   const d = new Date(ts);
   const pad = n => String(n).padStart(2, '0');
   
-  document.getElementById('successCpName').innerText = cpName || cp;
+  document.getElementById('successCpName').innerText = cpName || getCpName(cp);
   document.getElementById('successCpCode').innerText = cp;
+  document.getElementById('successTime').innerText =
+    pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  document.getElementById('successQueue').innerText = '⏳ กำลัง sync...';
+  
+  overlay.style.display = 'flex';
+  
+  setTimeout(() => {
+    overlay.style.display = 'none';
+  }, 4000);
+}
   document.getElementById('successTime').innerText =
     pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
   document.getElementById('successQueue').innerText = '⏳ กำลัง sync...';
@@ -832,10 +856,10 @@ async function syncQueue() {
       });
       console.log('✅ POST sent:', item.id);
       
-            // ✅ เก็บประวัติการสแกนลง IndexedDB
+      // ✅ เก็บประวัติการสแกนลง IndexedDB (ใช้ CP_MAP)
       await GTDB.addToHistory({
         cp: item.cp,
-        cpName: item.cpName || item.cp,  // ✅ ใช้ cpName จาก queue
+        cpName: getCpName(item.cp),
         name: item.name,
         ts: item.ts,
         acc: item.acc,
@@ -934,7 +958,7 @@ async function loadHistory() {
       '<div style="display:flex; align-items:center; gap:10px; min-width:0;">' +
         '<span style="font-size:16px;">' + icon + '</span>' +
         '<div style="min-width:0;">' +
-          '<div style="color:' + color + '; font-weight:800; font-size:14px; line-height:1.3;">' + (h.cpName || h.cp) + statusText + '</div>' +
+          '<div style="color:' + color + '; font-weight:800; font-size:14px; line-height:1.3;">' + (h.cpName || getCpName(h.cp)) + statusText + '</div>' +
           '<div style="color:var(--text-dim); font-size:11px; margin-top:2px; font-family:\'JetBrains Mono\', monospace;">' + h.cp + '</div>' +
         '</div>' +
       '</div>' +
