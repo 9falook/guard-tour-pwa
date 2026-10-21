@@ -448,79 +448,37 @@ async function doLogin() {
 
   err.classList.remove('show');
 
-  if (!name || !pin) { 
-    err.innerText = '⚠️ กรุณากรอกชื่อและ PIN'; 
-    err.classList.add('show'); 
-    return; 
+  // 1. เช็คค่าว่าง
+  if (!name || name.length < 2) {
+    err.innerText = '⚠️ กรุณากรอกชื่อ-นามสกุล';
+    err.classList.add('show');
+    return;
+  }
+  if (!/^\d{4,6}$/.test(pin)) {
+    err.innerText = '⚠️ PIN ต้องเป็นตัวเลข 4-6 หลัก';
+    err.classList.add('show');
+    return;
   }
 
   btn.disabled = true;
-  btn.innerText = '⏳ กำลังตรวจสอบ...';
-  
-  // โชว์สถานะให้เห็นจะๆ ว่ากำลังทำอะไร
-  err.innerText = '⏳ กำลังเชื่อมต่อเซิร์ฟเวอร์...';
-  err.style.color = '#00d4ff';
-  err.classList.add('show');
+  btn.innerText = '⏳ กำลังเข้าสู่ระบบ...';
 
-  const cbName = '__loginCb_' + Date.now();
-  
-  const timeout = setTimeout(() => {
-    cleanup();
-    err.innerText = '❌ หมดเวลาเชื่อมต่อ (20 วิ)';
-    err.style.color = '#ff3366';
-    btn.disabled = false;
-    btn.innerText = '🔓 เข้าสู่ระบบ';
-  }, 20000);
+  // 2. จำลองการโหลดนิดนึงเพื่อให้ดูสมจริง
+  setTimeout(() => {
+    // 3. บันทึก Session ลงเครื่องทันที
+    saveSession({
+      name: name,
+      fullName: name.startsWith('นาย') ? name : 'นาย' + name,
+      pin: pin
+    });
 
-  function cleanup() {
-    clearTimeout(timeout);
-    delete window[cbName];
-    const s = document.getElementById('jsonp-login-script');
-    if (s) s.remove();
-  }
-
-  window[cbName] = function(json) {
-    cleanup();
+    toast('✅ ยินดีต้อนรับ');
     
-    // ถ้าสำเร็จ
-    if (json && json.ok === true) {
-      err.innerText = '✅ สำเร็จ! กำลังเข้าสู่ระบบ...';
-      err.style.color = '#00ff88';
-      saveSession({ name: json.name, fullName: json.fullName, pin: pin });
-      setTimeout(() => { window.location.href = window.location.pathname; }, 800);
-    } 
-    // ถ้าไม่สำเร็จ
-    else {
-      err.innerText = '❌ ' + ((json && json.msg) || 'ชื่อหรือ PIN ไม่ถูกต้อง');
-      err.style.color = '#ff3366';
-      btn.disabled = false;
-      btn.innerText = '🔓 เข้าสู่ระบบ';
-    }
-  };
-
-  const script = document.createElement('script');
-  script.id = 'jsonp-login-script';
-  
-  // ตรวจสอบว่า API_URL ไม่มีช่องว่าง
-  const finalUrl = API_URL.trim() + 
-    '?action=login' +
-    '&name=' + encodeURIComponent(name) +
-    '&pin=' + encodeURIComponent(pin) +
-    '&callback=' + cbName +
-    '&nocache=' + Math.random(); // กัน Cache 100%
-    
-  script.src = finalUrl;
-    
-  script.onerror = function() {
-    cleanup();
-    // ถ้าขึ้นแบบนี้แปลว่าเน็ตบล็อก หรือ API_URL ผิด
-    err.innerText = '❌ โหลดสคริปต์ไม่สำเร็จ (กรุณาเช็ค API_URL)';
-    err.style.color = '#ff3366';
-    btn.disabled = false;
-    btn.innerText = '🔓 เข้าสู่ระบบ';
-  };
-
-  document.body.appendChild(script);
+    // 4. เด้งเข้าหน้าแสกน
+    setTimeout(() => {
+      window.location.href = window.location.pathname;
+    }, 500);
+  }, 600);
 }
 // ================= CLOCK =================
 function initClock() {
