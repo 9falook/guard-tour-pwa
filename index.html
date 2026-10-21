@@ -448,7 +448,7 @@ async function doLogin() {
 
   err.classList.remove('show');
 
-  // ตรวจสอบเบื้องต้น
+  // 1. ตรวจสอบเบื้องต้น
   if (!name) { err.innerText = '⚠️ กรุณากรอกชื่อ'; err.classList.add('show'); return; }
   if (!pin) { err.innerText = '⚠️ กรุณากรอก PIN'; err.classList.add('show'); return; }
 
@@ -458,13 +458,14 @@ async function doLogin() {
     return;
   }
 
-  // เปลี่ยนสถานะปุ่ม
+  // 2. เปลี่ยนสถานะปุ่ม
   btn.disabled = true;
   btn.innerText = '⏳ กำลังตรวจสอบ...';
   err.classList.remove('show');
 
-  // เตรียม JSONP
+  // 3. เตรียม JSONP
   const cbName = '__loginCb_' + Date.now();
+  
   const timeout = setTimeout(() => {
     cleanup();
     err.innerText = '❌ หมดเวลาเชื่อมต่อ (20 วิ) กรุณาลองใหม่';
@@ -480,12 +481,15 @@ async function doLogin() {
     if (s) s.remove();
   }
 
-  // Callback ที่รอรับผลจาก Server
+  // 4. รอรับผลจาก Server
   window[cbName] = function(json) {
     cleanup();
     
-    if (json && json.ok) {
-      // บันทึก Session
+    // ✅ พ่นค่าที่ได้จาก Server ออกมาดูใน Console เพื่อ Debug
+    console.log('🔍 Login Response:', json);
+
+    // ✅ ตรวจสอบผลลัพธ์ ถ้าผ่านเท่านั้นถึงจะบันทึก Session
+    if (json && json.ok === true) {
       saveSession({ 
         name: json.name, 
         fullName: json.fullName, 
@@ -493,13 +497,11 @@ async function doLogin() {
       });
       
       toast('✅ ยินดีต้อนรับ ' + json.fullName);
-      
-      // เด้งไปหน้าแรก
       setTimeout(() => {
         window.location.href = window.location.pathname;
       }, 600);
     } else {
-      // ผิดพลาด
+      // ❌ ถ้าไม่ผ่าน ให้แสดงข้อความแดง และไม่ต้องบันทึก Session
       err.innerText = '❌ ' + ((json && json.msg) || 'ชื่อหรือ PIN ไม่ถูกต้อง');
       err.classList.add('show');
       btn.disabled = false;
@@ -507,7 +509,7 @@ async function doLogin() {
     }
   };
 
-  // สร้าง Script Tag เพื่อยิง JSONP
+  // 5. ยิงคำขอไปที่ Server
   const script = document.createElement('script');
   script.id = 'jsonp-login-script';
   script.src = API_URL + 
@@ -515,12 +517,11 @@ async function doLogin() {
     '&name=' + encodeURIComponent(name) +
     '&pin=' + encodeURIComponent(pin) +
     '&callback=' + cbName +
-    '&_=' + Date.now(); // กัน Cache
+    '&_=' + Date.now();
     
   script.onerror = function() {
     cleanup();
-    // ✅ บางที Server Crash (500) ก็ทำให้ขึ้นแบบนี้
-    err.innerText = '❌ ชื่อหรือ PIN ไม่ถูกต้อง (หรือระบบขัดข้อง)';
+    err.innerText = '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
     err.classList.add('show');
     btn.disabled = false;
     btn.innerText = '🔓 เข้าสู่ระบบ';
