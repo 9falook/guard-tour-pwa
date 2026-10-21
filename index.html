@@ -302,7 +302,8 @@
   <div style="background:linear-gradient(135deg, #00ff88 0%, #00d4ff 100%); padding:36px 28px; border-radius:24px; text-align:center; max-width:340px; width:100%; box-shadow:0 24px 60px rgba(0,255,136,0.5); animation:popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);">
     <div style="font-size:90px; line-height:1; margin-bottom:12px;">✓</div>
     <div style="font-size:26px; font-weight:800; color:#001a33; margin-bottom:8px; letter-spacing:0.5px;">บันทึกสำเร็จ</div>
-    <div style="font-size:15px; color:#003322; font-weight:700; margin-bottom:4px;" id="successCp">CP01</div>
+    <div style="font-size:18px; color:#001a33; font-weight:800; margin-bottom:4px; line-height:1.3;" id="successCpName">ชื่อจุดตรวจ</div>
+    <div style="font-size:13px; color:#003322; font-weight:700; font-family:'JetBrains Mono',monospace; margin-bottom:4px;" id="successCpCode">CP01</div>
     <div style="font-size:14px; color:#003322; opacity:0.8; font-family:'JetBrains Mono',monospace;" id="successTime">15:42:30</div>
     <div style="font-size:12px; color:#003322; opacity:0.7; margin-top:14px; padding-top:14px; border-top:1px solid rgba(0,51,34,0.2);" id="successQueue">⏳ กำลัง sync...</div>
   </div>
@@ -706,8 +707,12 @@ async function saveScan() {
   const q = gpsQuality(Math.round(pos.acc));
   setGpsStatus(q.state, q.text);
 
-    const scanData = {
+      // ✅ ดึงชื่อจุดจากหน้าเว็บ (ที่โหลดมาจาก API แล้ว)
+  const cpName = document.getElementById('cpName').innerText || currentCp;
+
+  const scanData = {
     cp: currentCp,
+    cpName: cpName,   // ✅ เพิ่มชื่อจุดเข้า queue
     name: session.name,
     pin: session.pin,
     lat: pos.lat,
@@ -716,11 +721,11 @@ async function saveScan() {
     ts: Date.now()
   };
 
-    await GTDB.addScanToQueue(scanData);
+  await GTDB.addScanToQueue(scanData);
   await updateQueueBadge();
 
-    // ✅ แสดง overlay สำเร็จ
-  showSuccessOverlay(currentCp, scanData.ts);
+  // ✅ แสดง overlay สำเร็จ (พร้อมชื่อจุด)
+  showSuccessOverlay(currentCp, cpName, scanData.ts);
   
   // ✅ โหลดประวัติใหม่
   setTimeout(loadHistory, 3000);
@@ -749,25 +754,58 @@ async function saveScan() {
   }
 }
 
-// ✅ ฟังก์ชันแสดง overlay
-function showSuccessOverlay(cp, ts) {
+// ✅ ฟังก์ชันแสดง overlay (เพิ่ม cpName)
+function showSuccessOverlay(cp, cpName, ts) {
   const overlay = document.getElementById('successOverlay');
   const d = new Date(ts);
   const pad = n => String(n).padStart(2, '0');
   
-  document.getElementById('successCp').innerText = cp;
+  document.getElementById('successCpName').innerText = cpName || cp;
+  document.getElementById('successCpCode').innerText = cp;
   document.getElementById('successTime').innerText =
     pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
   document.getElementById('successQueue').innerText = '⏳ กำลัง sync...';
   
   overlay.style.display = 'flex';
   
-  // ✅ ปิดอัตโนมัติใน 4 วินาที
   setTimeout(() => {
     overlay.style.display = 'none';
   }, 4000);
 }
 
+async function fetchCpMap() {
+  if (!navigator.onLine) return;
+  
+  const cbName = '__onCpMap_' + Date.now();
+  
+  window[cbName] = async function(json) {
+    delete window[cbName];
+    const s = document.getElementById('jsonp-cpmap');
+    if (s) s.remove();
+    
+    if (json && json.ok && json.checkpoints) {
+      const map = {};
+      json.checkpoints.forEach(c => { map[c.code] = c.name; });
+      await GTDB.setMeta('cpMap', map);
+      
+      // อัปเดตชื่อจุดบนหน้าจอทันที
+      if (currentCp && map[currentCp]) {
+        document.getElementById('cpName').innerText = map[currentCp];
+      }
+    }
+  };
+  
+  const script = document.createElement('script');
+  script.id = 'jsonp-cpmap';
+  script.src = API_URL + '?action=getCheckpoints&callback=' + cbName + '&_=' + Date.now();
+  script.onerror = function() {
+    delete window[cbName];
+    const s = document.getElementById('jsonp-cpmap');
+    if (s) s.remove();
+  };
+  document.body.appendChild(script);
+}
+  
 function setStatus(msg, cls) {
   const s = document.getElementById('status');
   s.innerText = msg;
@@ -794,14 +832,14 @@ async function syncQueue() {
       });
       console.log('✅ POST sent:', item.id);
       
-      // ✅ เก็บประวัติการสแกนลง IndexedDB
+            // ✅ เก็บประวัติการสแกนลง IndexedDB
       await GTDB.addToHistory({
         cp: item.cp,
+        cpName: item.cpName || item.cp,  // ✅ ใช้ cpName จาก queue
         name: item.name,
         ts: item.ts,
         acc: item.acc,
-        status: 'success',
-        cpName: item.cpName || item.cp
+        status: 'success'
       });
       
       await GTDB.deleteQueuedScan(item.id);
@@ -892,12 +930,12 @@ async function loadHistory() {
       statusText = ' · ซ้ำ';
     }
 
-    return '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; background:' + bg + '; border:1px solid ' + borderColor + '; border-radius:10px; font-size:12px;">' +
+        return '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; background:' + bg + '; border:1px solid ' + borderColor + '; border-radius:10px; font-size:12px;">' +
       '<div style="display:flex; align-items:center; gap:10px; min-width:0;">' +
         '<span style="font-size:16px;">' + icon + '</span>' +
         '<div style="min-width:0;">' +
-          '<div style="font-family:\'JetBrains Mono\', monospace; font-weight:700; color:' + color + '; font-size:13px;">' + h.cp + statusText + '</div>' +
-          '<div style="color:var(--text-dim); font-size:11px; margin-top:2px;">' + (h.cpName || h.cp) + '</div>' +
+          '<div style="color:' + color + '; font-weight:800; font-size:14px; line-height:1.3;">' + (h.cpName || h.cp) + statusText + '</div>' +
+          '<div style="color:var(--text-dim); font-size:11px; margin-top:2px; font-family:\'JetBrains Mono\', monospace;">' + h.cp + '</div>' +
         '</div>' +
       '</div>' +
       '<div style="color:var(--text-dim); font-family:\'JetBrains Mono\', monospace; font-size:11px; font-weight:600; white-space:nowrap;">' + timeStr + '</div>' +
