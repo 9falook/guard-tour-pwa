@@ -1,98 +1,70 @@
 /*** ============================================================
- *  Service Worker — แคชไฟล์ให้เปิดได้แม้ไม่มีเน็ต
+ *  Service Worker — v3 (Network First for HTML)
  *  ============================================================ */
 
-const CACHE_NAME = 'guard-tour-v1';
+const CACHE_NAME = 'guard-tour-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './css/style.css',
   './js/db.js',
-  './js/app.js',
   './icons/icon-192.png',
-  './icons/icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap'
+  './icons/icon-512.png'
 ];
 
-// ติดตั้ง → แคชไฟล์ทั้งหมด
+// ✅ บังคับติดตั้งทันที
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing...');
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS.map(url => new Request(url, { cache: 'reload' })));
-    }).catch(err => {
-      console.error('[SW] Cache install failed:', err);
-    })
+    }).catch(err => console.log('Cache install failed:', err))
   );
-  self.skipWaiting();
 });
 
-// Activate → ลบ cache เก่า
+// ✅ ล้าง Cache เก่าทิ้งทันที
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating...');
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch → cache-first สำหรับ static, network-only สำหรับ API
+// ✅ Network-First สำหรับ HTML, Cache-First สำหรับไฟล์อื่น
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // ✅ กรองเฉพาะ http/https เท่านั้น
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    return;   // ปล่อยผ่าน (เช่น chrome-extension://)
+  // ไม่จัดการ Request ที่ไปหา Google Apps Script
+  if (url.hostname.includes('script.google.com') || url.hostname.includes('googleusercontent.com')) {
+    return; 
   }
 
-  // ✅ ไม่แคช Apps Script API
-  if (url.hostname.includes('script.google.com')) {
+  // ถ้าเป็น HTML ให้โหลดจากเน็ตก่อน (จะได้โค้ดใหม่เสมอ)
+  if (event.request.mode === 'navigate' || (event.request.method === 'GET' && event.request.headers.get('accept').includes('text/html'))) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return response;
+      }).catch(() => caches.match(event.request)) // ถ้าเน็ตหลุด ให้ใช้ Cache
+    );
     return;
   }
 
-  // ✅ ไม่แคช method อื่นนอกจาก GET
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // Static assets → cache-first
+  // ไฟล์อื่นๆ (รูป, CSS, JS) ให้โหลดจาก Cache ก่อน
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-
-      return fetch(event.request).then((response) => {
-        // ✅ ตรวจ response ก่อนแคช
+    caches.match(event.request).then(cached => {
+      return cached || fetch(event.request).then(response => {
         if (response && response.status === 200 && response.type === 'basic') {
           const clone = response.clone();
-          caches.open(CACHE_NAME)
-            .then(cache => cache.put(event.request, clone))
-            .catch(err => console.warn('[SW] cache.put skip:', err));
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => {
-        // ถ้า offline + ไม่มีใน cache → ลองคืน index.html
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
       });
     })
   );
 });
-
-// Background Sync (ถ้า browser รองรับ)
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-scans') {
-    event.waitUntil(
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => client.postMessage({ type: 'SYNC_NOW' }));
-      })
-    );
-  }
-});
-
-console.log('[SW] Service Worker loaded');
