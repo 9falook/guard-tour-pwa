@@ -448,28 +448,26 @@ async function doLogin() {
 
   err.classList.remove('show');
 
-  // 1. ตรวจสอบเบื้องต้น
-  if (!name) { err.innerText = '⚠️ กรุณากรอกชื่อ'; err.classList.add('show'); return; }
-  if (!pin) { err.innerText = '⚠️ กรุณากรอก PIN'; err.classList.add('show'); return; }
-
-  if (!navigator.onLine) {
-    err.innerText = '📵 การเข้าสู่ระบบครั้งแรก ต้องใช้อินเทอร์เน็ต';
-    err.classList.add('show');
-    return;
+  if (!name || !pin) { 
+    err.innerText = '⚠️ กรุณากรอกชื่อและ PIN'; 
+    err.classList.add('show'); 
+    return; 
   }
 
-  // 2. เปลี่ยนสถานะปุ่ม
   btn.disabled = true;
   btn.innerText = '⏳ กำลังตรวจสอบ...';
-  err.classList.remove('show');
+  
+  // โชว์สถานะให้เห็นจะๆ ว่ากำลังทำอะไร
+  err.innerText = '⏳ กำลังเชื่อมต่อเซิร์ฟเวอร์...';
+  err.style.color = '#00d4ff';
+  err.classList.add('show');
 
-  // 3. เตรียม JSONP
   const cbName = '__loginCb_' + Date.now();
   
   const timeout = setTimeout(() => {
     cleanup();
-    err.innerText = '❌ หมดเวลาเชื่อมต่อ (20 วิ) กรุณาลองใหม่';
-    err.classList.add('show');
+    err.innerText = '❌ หมดเวลาเชื่อมต่อ (20 วิ)';
+    err.style.color = '#ff3366';
     btn.disabled = false;
     btn.innerText = '🔓 เข้าสู่ระบบ';
   }, 20000);
@@ -481,48 +479,43 @@ async function doLogin() {
     if (s) s.remove();
   }
 
-  // 4. รอรับผลจาก Server
   window[cbName] = function(json) {
     cleanup();
     
-    // ✅ พ่นค่าที่ได้จาก Server ออกมาดูใน Console เพื่อ Debug
-    console.log('🔍 Login Response:', json);
-
-    // ✅ ตรวจสอบผลลัพธ์ ถ้าผ่านเท่านั้นถึงจะบันทึก Session
+    // ถ้าสำเร็จ
     if (json && json.ok === true) {
-      saveSession({ 
-        name: json.name, 
-        fullName: json.fullName, 
-        pin: pin 
-      });
-      
-      toast('✅ ยินดีต้อนรับ ' + json.fullName);
-      setTimeout(() => {
-        window.location.href = window.location.pathname;
-      }, 600);
-    } else {
-      // ❌ ถ้าไม่ผ่าน ให้แสดงข้อความแดง และไม่ต้องบันทึก Session
+      err.innerText = '✅ สำเร็จ! กำลังเข้าสู่ระบบ...';
+      err.style.color = '#00ff88';
+      saveSession({ name: json.name, fullName: json.fullName, pin: pin });
+      setTimeout(() => { window.location.href = window.location.pathname; }, 800);
+    } 
+    // ถ้าไม่สำเร็จ
+    else {
       err.innerText = '❌ ' + ((json && json.msg) || 'ชื่อหรือ PIN ไม่ถูกต้อง');
-      err.classList.add('show');
+      err.style.color = '#ff3366';
       btn.disabled = false;
       btn.innerText = '🔓 เข้าสู่ระบบ';
     }
   };
 
-  // 5. ยิงคำขอไปที่ Server
   const script = document.createElement('script');
   script.id = 'jsonp-login-script';
-  script.src = API_URL + 
+  
+  // ตรวจสอบว่า API_URL ไม่มีช่องว่าง
+  const finalUrl = API_URL.trim() + 
     '?action=login' +
     '&name=' + encodeURIComponent(name) +
     '&pin=' + encodeURIComponent(pin) +
     '&callback=' + cbName +
-    '&_=' + Date.now();
+    '&nocache=' + Math.random(); // กัน Cache 100%
+    
+  script.src = finalUrl;
     
   script.onerror = function() {
     cleanup();
-    err.innerText = '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
-    err.classList.add('show');
+    // ถ้าขึ้นแบบนี้แปลว่าเน็ตบล็อก หรือ API_URL ผิด
+    err.innerText = '❌ โหลดสคริปต์ไม่สำเร็จ (กรุณาเช็ค API_URL)';
+    err.style.color = '#ff3366';
     btn.disabled = false;
     btn.innerText = '🔓 เข้าสู่ระบบ';
   };
