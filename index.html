@@ -842,21 +842,21 @@ async function syncQueue() {
   if (_syncing || !navigator.onLine) return;
   const queue = await GTDB.getAllQueuedScans();
   if (queue.length === 0) return;
+  
   _syncing = true;
   let done = 0, failed = 0;
   
   for (const item of queue) {
     try {
       console.log('📤 Syncing:', item);
-      const res = await fetch(API_URL, {
+      await fetch(API_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: 'addScan', data: item })
       });
-      console.log('✅ POST sent:', item.id);
       
-      // ✅ เก็บประวัติการสแกนลง IndexedDB (ใช้ CP_MAP)
+      // ✅ เก็บประวัติ
       await GTDB.addToHistory({
         cp: item.cp,
         cpName: getCpName(item.cp),
@@ -868,15 +868,10 @@ async function syncQueue() {
       
       await GTDB.deleteQueuedScan(item.id);
       done++;
-        } catch (err) {
+    } catch (err) {
       console.error('❌ Sync error:', err);
       failed++;
     }
-  }
-  
-  // ✅ โหลดประวัติใหม่หลัง sync
-  if (done > 0) {
-    setTimeout(loadHistory, 500);
   }
   
   console.log('📊 Sync done:', done, 'failed:', failed);
@@ -885,7 +880,6 @@ async function syncQueue() {
   
   if (done > 0) {
     toast('✅ Sync ' + done + ' รายการ');
-    // ✅ โหลดประวัติใหม่หลัง sync สำเร็จ
     setTimeout(loadHistory, 500);
   }
 }
@@ -910,7 +904,6 @@ function toast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ================= HISTORY =================
 async function loadHistory() {
   const session = getSession();
   if (!session) return;
@@ -930,10 +923,8 @@ async function loadHistory() {
   list.innerHTML = myHistory.map(h => {
     const d = new Date(h.ts);
     const pad = n => String(n).padStart(2, '0');
-    const timeStr = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' +
-                    pad(d.getHours()) + ':' + pad(d.getMinutes());
+    const timeStr = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 
-    // สีตามสถานะ
     let icon = '✅';
     let color = 'var(--accent)';
     let bg = 'rgba(0,255,136,0.06)';
@@ -954,7 +945,7 @@ async function loadHistory() {
       statusText = ' · ซ้ำ';
     }
 
-        return '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; background:' + bg + '; border:1px solid ' + borderColor + '; border-radius:10px; font-size:12px;">' +
+    return '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; background:' + bg + '; border:1px solid ' + borderColor + '; border-radius:10px; font-size:12px;">' +
       '<div style="display:flex; align-items:center; gap:10px; min-width:0;">' +
         '<span style="font-size:16px;">' + icon + '</span>' +
         '<div style="min-width:0;">' +
@@ -968,7 +959,6 @@ async function loadHistory() {
 
   panel.style.display = 'block';
 }
-
 async function clearHistoryConfirm() {
   if (!confirm('ล้างประวัติการสแกนทั้งหมด?')) return;
   await GTDB.clearHistory();
