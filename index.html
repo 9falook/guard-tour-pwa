@@ -159,6 +159,37 @@
   90% { transform: rotate(180deg); }
 }
 
+
+    /* ===== CHECKPOINT STATUS LIST ===== */
+  .cp-status-list {
+    display: flex; flex-direction: column; gap: 8px; margin-top: 16px;
+  }
+  .cp-status-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  }
+  .cp-status-left { display: flex; align-items: center; gap: 10px; }
+  .cp-status-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+    box-shadow: 0 0 10px currentColor;
+  }
+  .cp-status-dot.good { background: var(--accent); color: var(--accent); }
+  .cp-status-dot.warn { background: var(--warn); color: var(--warn); }
+  .cp-status-dot.bad  { background: var(--danger); color: var(--danger); }
+  
+  .cp-status-info .code { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--text); }
+  .cp-status-info .name { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .cp-status-right { text-align: right; }
+  .cp-status-right .time { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+  .cp-status-right .guard { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+  .cp-status-right .badge {
+    display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 4px;
+  }
+  .badge.good { background: rgba(0,255,136,0.1); color: var(--accent); }
+  .badge.warn { background: rgba(255,181,71,0.1); color: var(--warn); }
+  .badge.bad  { background: rgba(255,51,102,0.1); color: var(--danger); }
+
   /* ===== TOAST ===== */
   .toast {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -241,6 +272,14 @@
 
       <div class="scanner-hint">
         💡 <b>วิธีใช้:</b> สแกน QR ที่จุดตรวจ → ระบบจะเปิดหน้าบันทึกอัตโนมัติ
+      </div>
+            <div class="scanner-hint" style="margin-top: 20px;">
+        📊 <b>สถานะจุดตรวจ</b> — เช็คก่อนเดินไปสแกน (อัปเดตอัตโนมัติ)
+      </div>
+      
+      <!-- รายการสถานะจะถูกสร้างที่นี่ -->
+      <div id="checkpointStatusList" class="cp-status-list">
+        <div style="text-align:center; font-size:12px; color:var(--text-dim);">⏳ กำลังโหลดสถานะ...</div>
       </div>
     </div>
   </div>
@@ -520,6 +559,11 @@ function showScanner() {
   stopWatchGPS();
   if (isScanning) return;
 
+    // ✅ เริ่มโหลดสถานะจุดตรวจ
+  fetchCheckpointStatus();
+  if (window._statusInterval) clearInterval(window._statusInterval);
+  window._statusInterval = setInterval(fetchCheckpointStatus, 60000); // รีเฟรชทุก 1 นาที
+  
   Html5Qrcode.getCameras().then(devices => {
     if (!devices || devices.length === 0) {
       document.getElementById('camStatusText').innerText = 'ไม่พบกล้อง';
@@ -977,6 +1021,55 @@ if ('serviceWorker' in navigator) {
       }).catch(err => console.error('SW:', err));
   });
 }
+
+// ================= CHECKPOINT STATUS =================
+function fetchCheckpointStatus() {
+  const cbName = '__cpStatusCb_' + Date.now();
+  
+  window[cbName] = function(json) {
+    delete window[cbName];
+    const s = document.getElementById('jsonp-cpstatus');
+    if (s) s.remove();
+
+    if (!json || !json.ok || !json.data) return;
+
+    const list = document.getElementById('checkpointStatusList');
+    if (!list) return;
+
+    list.innerHTML = json.data.map(function(cp) {
+      let badgeText = '';
+      if (cp.status === 'good') badgeText = 'เพิ่งสแกน';
+      else if (cp.status === 'warn') badgeText = 'ใกล้ถึงเวลา';
+      else badgeText = 'ต้องสแกน';
+
+      return '<div class="cp-status-item">' +
+        '<div class="cp-status-left">' +
+          '<div class="cp-status-dot ' + cp.status + '"></div>' +
+          '<div class="cp-status-info">' +
+            '<div class="code">' + cp.code + '</div>' +
+            '<div class="name">' + cp.name + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cp-status-right">' +
+          '<div class="time">' + cp.lastTime + '</div>' +
+          '<div class="guard">' + cp.lastGuard + '</div>' +
+          '<span class="badge ' + cp.status + '">' + badgeText + '</span>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  };
+
+  const script = document.createElement('script');
+  script.id = 'jsonp-cpstatus';
+  script.src = API_URL + '?action=getCheckpointStatus&callback=' + cbName + '&_=' + Date.now();
+  script.onerror = function() {
+    delete window[cbName];
+    const s = document.getElementById('jsonp-cpstatus');
+    if (s) s.remove();
+  };
+  document.body.appendChild(script);
+}
+  
 console.log('✅ App v2.0 loaded');
 </script>
 </body>
