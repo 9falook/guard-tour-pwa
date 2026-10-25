@@ -190,6 +190,40 @@
   .badge.warn { background: rgba(255,181,71,0.1); color: var(--warn); }
   .badge.bad  { background: rgba(255,51,102,0.1); color: var(--danger); }
 
+
+    /* ===== CHECKPOINT STATUS CARDS ===== */
+  .cp-status-wrapper {
+    margin-top: 16px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .cp-card {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    position: relative; overflow: hidden; transition: all 0.2s;
+  }
+  .cp-card.good { border-left: 3px solid var(--accent); }
+  .cp-card.warn { border-left: 3px solid var(--warn); }
+  .cp-card.bad  { border-left: 3px solid var(--danger); }
+  
+  .cp-card-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .cp-card-code { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--primary); }
+  .cp-card-name { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 2px; }
+  
+  .cp-card-badge {
+    padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .cp-card-badge.good { background: rgba(0,255,136,0.15); color: var(--accent); }
+  .cp-card-badge.warn { background: rgba(255,181,71,0.15); color: var(--warn); }
+  .cp-card-badge.bad  { background: rgba(255,51,102,0.15); color: var(--danger); }
+  
+  .cp-card-meta {
+    display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim);
+    border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 8px;
+  }
+
   /* ===== TOAST ===== */
   .toast {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -270,16 +304,13 @@
 
       <button class="btn-manual" onclick="promptManualCp()">⌨️ กรอกจุดตรวจเอง (ถ้ากล้องใช้ไม่ได้)</button>
 
-      <div class="scanner-hint">
-        💡 <b>วิธีใช้:</b> สแกน QR ที่จุดตรวจ → ระบบจะเปิดหน้าบันทึกอัตโนมัติ
-      </div>
-            <div class="scanner-hint" style="margin-top: 20px;">
-        📊 <b>สถานะจุดตรวจ</b> — เช็คก่อนเดินไปสแกน (อัปเดตอัตโนมัติ)
+            <div class="scanner-hint" style="margin-top: 20px; margin-bottom: 10px;">
+        📊 <b>สถานะจุดตรวจ</b> — เช็คก่อนเดินไปสแกน
       </div>
       
       <!-- รายการสถานะจะถูกสร้างที่นี่ -->
-      <div id="checkpointStatusList" class="cp-status-list">
-        <div style="text-align:center; font-size:12px; color:var(--text-dim);">⏳ กำลังโหลดสถานะ...</div>
+      <div id="checkpointStatusList" class="cp-status-wrapper">
+        <div style="text-align:center; font-size:12px; color:var(--text-dim); padding: 10px;">⏳ กำลังโหลดสถานะ...</div>
       </div>
     </div>
   </div>
@@ -1031,29 +1062,32 @@ function fetchCheckpointStatus() {
     const s = document.getElementById('jsonp-cpstatus');
     if (s) s.remove();
 
-    if (!json || !json.ok || !json.data) return;
+    if (!json || !json.ok || !json.data) {
+      document.getElementById('checkpointStatusList').innerHTML = 
+        '<div style="text-align:center; font-size:12px; color:var(--danger); padding: 10px;">❌ ไม่สามารถโหลดสถานะได้</div>';
+      return;
+    }
 
     const list = document.getElementById('checkpointStatusList');
     if (!list) return;
 
     list.innerHTML = json.data.map(function(cp) {
-      let badgeText = '';
-      if (cp.status === 'good') badgeText = 'เพิ่งสแกน';
-      else if (cp.status === 'warn') badgeText = 'ใกล้ถึงเวลา';
-      else badgeText = 'ต้องสแกน';
+      let statusText = '';
+      if (cp.status === 'good') statusText = 'ปกติ';
+      else if (cp.status === 'warn') statusText = 'ควรตรวจ';
+      else statusText = 'ล่าช้า';
 
-      return '<div class="cp-status-item">' +
-        '<div class="cp-status-left">' +
-          '<div class="cp-status-dot ' + cp.status + '"></div>' +
-          '<div class="cp-status-info">' +
-            '<div class="code">' + cp.code + '</div>' +
-            '<div class="name">' + cp.name + '</div>' +
+      return '<div class="cp-card ' + cp.status + '">' +
+        '<div class="cp-card-head">' +
+          '<div>' +
+            '<div class="cp-card-code">' + cp.code + '</div>' +
+            '<div class="cp-card-name">' + cp.name + '</div>' +
           '</div>' +
+          '<span class="cp-card-badge ' + cp.status + '">' + statusText + '</span>' +
         '</div>' +
-        '<div class="cp-status-right">' +
-          '<div class="time">' + cp.lastTime + '</div>' +
-          '<div class="guard">' + cp.lastGuard + '</div>' +
-          '<span class="badge ' + cp.status + '">' + badgeText + '</span>' +
+        '<div class="cp-card-meta">' +
+          '<span>📅 ' + cp.lastTime + '</span>' +
+          '<span>👤 ' + cp.guard + '</span>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -1061,11 +1095,13 @@ function fetchCheckpointStatus() {
 
   const script = document.createElement('script');
   script.id = 'jsonp-cpstatus';
-  script.src = API_URL + '?action=getCheckpointStatus&callback=' + cbName + '&_=' + Date.now();
+  script.src = API_URL + '?action=getCheckpointStatus&callback=' + cbName + '&_=' + Math.random();
   script.onerror = function() {
     delete window[cbName];
     const s = document.getElementById('jsonp-cpstatus');
     if (s) s.remove();
+    document.getElementById('checkpointStatusList').innerHTML = 
+      '<div style="text-align:center; font-size:12px; color:var(--danger); padding: 10px;">❌ การเชื่อมต่อขัดข้อง</div>';
   };
   document.body.appendChild(script);
 }
