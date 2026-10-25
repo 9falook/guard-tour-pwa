@@ -556,13 +556,13 @@ function showScanner() {
   document.getElementById('camStatus').style.display = 'block';
   document.getElementById('reader').style.display = 'none';
 
-  stopWatchGPS();
-  if (isScanning) return;
-
     // ✅ เริ่มโหลดสถานะจุดตรวจ
   fetchCheckpointStatus();
   if (window._statusInterval) clearInterval(window._statusInterval);
   window._statusInterval = setInterval(fetchCheckpointStatus, 60000); // รีเฟรชทุก 1 นาที
+
+    stopWatchGPS();
+  if (isScanning) return;
   
   Html5Qrcode.getCameras().then(devices => {
     if (!devices || devices.length === 0) {
