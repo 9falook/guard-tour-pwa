@@ -120,78 +120,22 @@
     color: var(--text-dim); background: rgba(255,255,255,0.04);
     border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
   .btn-manual:hover { background: rgba(255,255,255,0.08); color: var(--text); }
-  .change-cp {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  margin-top: 16px;
-  padding: 16px 20px;
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  color: var(--primary);
-  background: linear-gradient(135deg, rgba(0,212,255,0.12) 0%, rgba(0,212,255,0.04) 100%);
-  border: 1.5px solid rgba(0,212,255,0.4);
-  border-radius: 14px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.25s;
-  box-shadow: 0 4px 12px rgba(0,212,255,0.1);
-}
-.change-cp:active {
-  transform: scale(0.97);
-  background: linear-gradient(135deg, rgba(0,212,255,0.2) 0%, rgba(0,212,255,0.08) 100%);
-}
-.change-cp:hover {
-  border-color: var(--primary);
-  background: linear-gradient(135deg, rgba(0,212,255,0.18) 0%, rgba(0,212,255,0.06) 100%);
-  box-shadow: 0 6px 20px rgba(0,212,255,0.25);
-}
-.change-cp .icon {
-  font-size: 20px;
-  animation: rotateIcon 3s linear infinite;
-}
-@keyframes rotateIcon {
-  0%, 80%, 100% { transform: rotate(0deg); }
-  90% { transform: rotate(180deg); }
-}
-
-
-    /* ===== CHECKPOINT STATUS LIST ===== */
-  .cp-status-list {
-    display: flex; flex-direction: column; gap: 8px; margin-top: 16px;
-  }
-  .cp-status-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 14px; border-radius: 12px;
-    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-  }
-  .cp-status-left { display: flex; align-items: center; gap: 10px; }
-  .cp-status-dot {
-    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
-    box-shadow: 0 0 10px currentColor;
-  }
-  .cp-status-dot.good { background: var(--accent); color: var(--accent); }
-  .cp-status-dot.warn { background: var(--warn); color: var(--warn); }
-  .cp-status-dot.bad  { background: var(--danger); color: var(--danger); }
   
-  .cp-status-info .code { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--text); }
-  .cp-status-info .name { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-  .cp-status-right { text-align: right; }
-  .cp-status-right .time { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
-  .cp-status-right .guard { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
-  .cp-status-right .badge {
-    display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-top: 4px;
+  .change-cp {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; margin-top: 16px; padding: 16px 20px;
+    font-family: inherit; font-size: 15px; font-weight: 700; letter-spacing: 0.3px;
+    color: var(--primary);
+    background: linear-gradient(135deg, rgba(0,212,255,0.12) 0%, rgba(0,212,255,0.04) 100%);
+    border: 1.5px solid rgba(0,212,255,0.4); border-radius: 14px; cursor: pointer;
+    text-decoration: none; transition: all 0.25s; box-shadow: 0 4px 12px rgba(0,212,255,0.1);
   }
-  .badge.good { background: rgba(0,255,136,0.1); color: var(--accent); }
-  .badge.warn { background: rgba(255,181,71,0.1); color: var(--warn); }
-  .badge.bad  { background: rgba(255,51,102,0.1); color: var(--danger); }
+  .change-cp:active { transform: scale(0.97); background: linear-gradient(135deg, rgba(0,212,255,0.2) 0%, rgba(0,212,255,0.08) 100%); }
+  .change-cp:hover { border-color: var(--primary); background: linear-gradient(135deg, rgba(0,212,255,0.18) 0%, rgba(0,212,255,0.06) 100%); box-shadow: 0 6px 20px rgba(0,212,255,0.25); }
+  .change-cp .icon { font-size: 20px; animation: rotateIcon 3s linear infinite; }
+  @keyframes rotateIcon { 0%, 80%, 100% { transform: rotate(0deg); } 90% { transform: rotate(180deg); } }
 
-
-    /* ===== CHECKPOINT STATUS CARDS ===== */
+  /* ===== CHECKPOINT STATUS CARDS ===== */
   .cp-status-wrapper {
     margin-top: 16px; display: flex; flex-direction: column; gap: 10px;
   }
@@ -203,36 +147,22 @@
   .cp-card.good { border-left: 3px solid var(--accent); }
   .cp-card.warn { border-left: 3px solid var(--warn); }
   .cp-card.bad  { border-left: 3px solid var(--danger); }
-  
-  .cp-card-head {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    margin-bottom: 8px;
-  }
+  .cp-card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
   .cp-card-code { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--primary); }
   .cp-card-name { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 2px; }
-  
-  .cp-card-badge {
-    padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.5px;
-  }
+  .cp-card-badge { padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
   .cp-card-badge.good { background: rgba(0,255,136,0.15); color: var(--accent); }
   .cp-card-badge.warn { background: rgba(255,181,71,0.15); color: var(--warn); }
   .cp-card-badge.bad  { background: rgba(255,51,102,0.15); color: var(--danger); }
-  
-  .cp-card-meta {
-    display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim);
-    border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 8px;
-  }
+  .cp-card-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 8px; }
 
   /* ===== TOAST ===== */
   .toast {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.9); color: white;
-    padding: 12px 20px; border-radius: 12px;
+    background: rgba(0,0,0,0.9); color: white; padding: 12px 20px; border-radius: 12px;
     font-size: 13px; font-weight: 600; z-index: 9999;
     opacity: 0; pointer-events: none; transition: opacity 0.3s;
-    border: 1px solid rgba(255,255,255,0.1);
-    max-width: 90vw; text-align: center;
+    border: 1px solid rgba(255,255,255,0.1); max-width: 90vw; text-align: center;
   }
   .toast.show { opacity: 1; }
 </style>
@@ -240,8 +170,6 @@
 <body>
 
 <div class="wrapper">
-
-  <!-- HEADER -->
   <div class="top-bar">
     <div>
       <span class="beta-chip">🧪 BETA</span>
@@ -255,7 +183,6 @@
     </div>
   </div>
 
-  <!-- USER BAR -->
   <div class="user-bar" id="userBar" style="display:none;">
     <span class="user-name">
       <span>👤</span>
@@ -264,29 +191,26 @@
     <button class="logout-btn" onclick="doLogout()">🚪 ออก</button>
   </div>
 
-  <!-- ============ LOGIN VIEW ============ -->
+  <!-- LOGIN -->
   <div id="loginView" class="login-wrap">
     <div class="login-card">
       <div class="login-icon">🛡️</div>
       <div class="login-title">Guard Tour</div>
       <div class="login-sub">ระบบบันทึกการตรวจ — เข้าสู่ระบบเพื่อเริ่มงาน</div>
-
       <div class="field">
         <label>ชื่อ รปภ.</label>
         <input id="loginName" placeholder="กรอกชื่อ-นามสกุล" autocomplete="off" autocapitalize="off">
       </div>
-
       <div class="field">
         <label>PIN (4 หลัก)</label>
         <input id="loginPin" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••" autocomplete="off">
       </div>
-
       <button class="login-btn" id="loginBtn" onclick="doLogin()">🔓 เข้าสู่ระบบ</button>
       <div class="login-err" id="loginErr"></div>
     </div>
   </div>
 
-  <!-- ============ SCANNER VIEW ============ -->
+  <!-- SCANNER -->
   <div id="scannerView" class="scanner-wrap">
     <div class="scanner-card">
       <div class="scanner-title">
@@ -294,28 +218,23 @@
         <span>สแกน QR ที่จุดตรวจ</span>
       </div>
       <div class="scanner-sub">หันกล้องไปที่ QR Code ที่ติดไว้ที่จุดตรวจ</div>
-
       <div id="reader"></div>
-
       <div id="camStatus" class="cam-status" style="display:none;">
         <div class="big">📷</div>
         <div id="camStatusText">กำลังเปิดกล้อง...</div>
       </div>
-
       <button class="btn-manual" onclick="promptManualCp()">⌨️ กรอกจุดตรวจเอง (ถ้ากล้องใช้ไม่ได้)</button>
-
-            <div class="scanner-hint" style="margin-top: 20px; margin-bottom: 10px;">
+      
+      <div class="scanner-hint" style="margin-top: 20px; margin-bottom: 10px;">
         📊 <b>สถานะจุดตรวจ</b> — เช็คก่อนเดินไปสแกน
       </div>
-      
-      <!-- รายการสถานะจะถูกสร้างที่นี่ -->
       <div id="checkpointStatusList" class="cp-status-wrapper">
         <div style="text-align:center; font-size:12px; color:var(--text-dim); padding: 10px;">⏳ กำลังโหลดสถานะ...</div>
       </div>
     </div>
   </div>
 
-  <!-- ============ FORM VIEW ============ -->
+  <!-- FORM -->
   <div id="formView" class="scanner-wrap">
     <div class="card">
       <div class="cp-header">
@@ -325,29 +244,24 @@
           <div class="cp-name" id="cpName">กำลังโหลด...</div>
         </div>
       </div>
-
       <div class="shift-badge" id="shiftBadge">
         <span class="dot"></span>
         <span id="shiftText">กำลังโหลด...</span>
       </div>
-
       <div class="gps-bar" id="gpsBar" onclick="refreshGPS()" style="cursor:pointer;">
         <span id="gpsIcon">📡</span>
         <span class="spinner" id="gpsSpinner" style="display:none"></span>
         <span id="gpsText">กำลังค้นหาตำแหน่ง...</span>
         <span style="margin-left:auto; font-size:14px;">🔄</span>
       </div>
-
       <button class="btn-submit" id="btn" onclick="saveScan()">✅ บันทึกการตรวจ</button>
       <div id="status"></div>
-      <div id="queueBadge"></div>
-
-            <button class="change-cp" onclick="showScanner()">
+      
+      <button class="change-cp" onclick="showScanner()">
         <span class="icon">🔄</span>
         <span>เปลี่ยนจุดตรวจ — สแกนใหม่</span>
       </button>
 
-      <!-- ===== HISTORY PANEL ===== -->
       <div id="historyPanel" style="display:none; margin-top: 20px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
           <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text);">
@@ -358,16 +272,15 @@
         </div>
         <div id="historyList" style="display: flex; flex-direction: column; gap: 8px;"></div>
       </div>
-
     </div>
   </div>
 
-  <div class="footer">Guard Tour PWA · v2.0</div>
+  <div class="footer">Guard Tour PWA · v3.0 (Online Only)</div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- ===== SUCCESS OVERLAY ===== -->
+<!-- SUCCESS OVERLAY -->
 <div id="successOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9999; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(8px);">
   <div style="background:linear-gradient(135deg, #00ff88 0%, #00d4ff 100%); padding:36px 28px; border-radius:24px; text-align:center; max-width:340px; width:100%; box-shadow:0 24px 60px rgba(0,255,136,0.5); animation:popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);">
     <div style="font-size:90px; line-height:1; margin-bottom:12px;">✓</div>
@@ -375,26 +288,18 @@
     <div style="font-size:18px; color:#001a33; font-weight:800; margin-bottom:4px; line-height:1.3;" id="successCpName">ชื่อจุดตรวจ</div>
     <div style="font-size:13px; color:#003322; font-weight:700; font-family:'JetBrains Mono',monospace; margin-bottom:4px;" id="successCpCode">CP01</div>
     <div style="font-size:14px; color:#003322; opacity:0.8; font-family:'JetBrains Mono',monospace;" id="successTime">15:42:30</div>
-    <div style="font-size:12px; color:#003322; opacity:0.7; margin-top:14px; padding-top:14px; border-top:1px solid rgba(0,51,34,0.2);" id="successQueue">⏳ กำลัง sync...</div>
+    <div style="font-size:12px; color:#003322; opacity:0.7; margin-top:14px; padding-top:14px; border-top:1px solid rgba(0,51,34,0.2);">✅ ส่งข้อมูลเข้าระบบแล้ว</div>
   </div>
 </div>
 <style>
-  @keyframes popIn {
-    0% { transform: scale(0.5); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-  }
+  @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 </style>
 
 <script src="./js/db.js"></script>
 <script>
-// ============================================================
-//  Guard Tour PWA — v2.0 (with Login + Watch GPS)
-// ============================================================
-
 const API_URL = 'https://script.google.com/macros/s/AKfycbzZWSq5soyw9Xk7zo22KGM2ILhrSNLNMhPsQSiWMoxzcpzwJXdVxkADSs7uX0TU3tcPeQ/exec';
 const SESSION_HOURS = 12;
 
-// ✅ ชื่อจุดตรวจ (ตรงกับชีต Checkpoints)
 const CP_MAP = {
   'CP01': 'สำนักงานหลังใหม่',
   'CP02': 'ด้านหลังอาคารจัดแสดง (ห้องประชุม)',
@@ -404,9 +309,7 @@ const CP_MAP = {
   'CP06': 'ด้านข้างอาคารจัดแสดง (ห้องประชาสัมพันธ์)'
 };
 
-function getCpName(cp) {
-  return CP_MAP[String(cp).toUpperCase()] || cp;
-}
+function getCpName(cp) { return CP_MAP[String(cp).toUpperCase()] || cp; }
 
 let currentCp = null;
 let scanner = null;
@@ -415,36 +318,26 @@ let _watchId = null;
 let _watchBestPos = null;
 let _watchStartTime = null;
 
-// ================= INIT =================
 document.addEventListener('DOMContentLoaded', () => {
   initClock();
   initConnection();
   routePage();
 });
 
-// ================= ROUTER =================
 function routePage() {
   const session = getSession();
-
-  if (!session) {
-    showLogin();
-    return;
-  }
-
+  if (!session) { showLogin(); return; }
   showUserBar(session.name);
 
   const params = new URLSearchParams(window.location.search);
   const cp = params.get('cp');
 
-    if (cp) {
+  if (cp) {
     currentCp = cp.toUpperCase();
     showForm();
     loadCpInfo();
     updateShiftBadge();
-    updateQueueBadge();
-    loadHistory();       // ✅ โหลดประวัติตอนเปิดหน้า
-    setInterval(syncQueue, 60000);
-    setTimeout(syncQueue, 2000);
+    loadHistory();
     startWatchGPS();
   } else {
     showScanner();
@@ -455,11 +348,8 @@ function routePage() {
 function saveSession(data) {
   try {
     localStorage.setItem('guardTour_session', JSON.stringify({
-      name: data.name,
-      fullName: data.fullName,
-      pin: data.pin,
-      loginAt: Date.now(),
-      expiresAt: Date.now() + SESSION_HOURS * 60 * 60 * 1000
+      name: data.name, fullName: data.fullName, pin: data.pin,
+      loginAt: Date.now(), expiresAt: Date.now() + SESSION_HOURS * 60 * 60 * 1000
     }));
   } catch (e) {}
 }
@@ -469,29 +359,14 @@ function getSession() {
     const s = localStorage.getItem('guardTour_session');
     if (!s) return null;
     const session = JSON.parse(s);
-    if (Date.now() > session.expiresAt) {
-      localStorage.removeItem('guardTour_session');
-      return null;
-    }
+    if (Date.now() > session.expiresAt) { localStorage.removeItem('guardTour_session'); return null; }
     return session;
   } catch (e) { return null; }
 }
 
-function clearSession() {
-  localStorage.removeItem('guardTour_session');
-}
-
-function doLogout() {
-  if (!confirm('ออกจากระบบ?')) return;
-  clearSession();
-  stopWatchGPS();
-  location.href = window.location.pathname;
-}
-
-function showUserBar(fullName) {
-  document.getElementById('userBar').style.display = 'flex';
-  document.getElementById('userName').innerText = fullName || 'รปภ.';
-}
+function clearSession() { localStorage.removeItem('guardTour_session'); }
+function doLogout() { if (!confirm('ออกจากระบบ?')) return; clearSession(); stopWatchGPS(); location.href = window.location.pathname; }
+function showUserBar(fullName) { document.getElementById('userBar').style.display = 'flex'; document.getElementById('userName').innerText = fullName || 'รปภ.'; }
 
 // ================= LOGIN =================
 function showLogin() {
@@ -499,15 +374,9 @@ function showLogin() {
   document.getElementById('scannerView').classList.remove('show');
   document.getElementById('formView').classList.remove('show');
   document.getElementById('userBar').style.display = 'none';
-
   setTimeout(() => document.getElementById('loginName').focus(), 300);
-
-  document.getElementById('loginPin').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin();
-  });
-  document.getElementById('loginName').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('loginPin').focus();
-  });
+  document.getElementById('loginPin').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('loginName').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPin').focus(); });
 }
 
 async function doLogin() {
@@ -515,66 +384,36 @@ async function doLogin() {
   const pin = document.getElementById('loginPin').value.trim();
   const btn = document.getElementById('loginBtn');
   const err = document.getElementById('loginErr');
-
   err.classList.remove('show');
 
-  // 1. เช็คค่าว่าง
-  if (!name || name.length < 2) {
-    err.innerText = '⚠️ กรุณากรอกชื่อ-นามสกุล';
-    err.classList.add('show');
-    return;
-  }
-  if (!/^\d{4,6}$/.test(pin)) {
-    err.innerText = '⚠️ PIN ต้องเป็นตัวเลข 4-6 หลัก';
-    err.classList.add('show');
-    return;
-  }
+  if (!name || name.length < 2) { err.innerText = '⚠️ กรุณากรอกชื่อ-นามสกุล'; err.classList.add('show'); return; }
+  if (!/^\d{4,6}$/.test(pin)) { err.innerText = '⚠️ PIN ต้องเป็นตัวเลข 4-6 หลัก'; err.classList.add('show'); return; }
 
   btn.disabled = true;
   btn.innerText = '⏳ กำลังเข้าสู่ระบบ...';
-
-  // 2. จำลองการโหลดนิดนึงเพื่อให้ดูสมจริง
   setTimeout(() => {
-    // 3. บันทึก Session ลงเครื่องทันที
-    saveSession({
-      name: name,
-      fullName: name.startsWith('นาย') ? name : 'นาย' + name,
-      pin: pin
-    });
-
+    saveSession({ name: name, fullName: name.startsWith('นาย') ? name : 'นาย' + name, pin: pin });
     toast('✅ ยินดีต้อนรับ');
-    
-    // 4. เด้งเข้าหน้าแสกน
-    setTimeout(() => {
-      window.location.href = window.location.pathname;
-    }, 500);
+    setTimeout(() => { window.location.href = window.location.pathname; }, 500);
   }, 600);
 }
-// ================= CLOCK =================
+
+// ================= CLOCK & CONNECTION =================
 function initClock() {
   const tick = () => {
-    const d = new Date();
-    const pad = n => String(n).padStart(2, '0');
+    const d = new Date(); const pad = n => String(n).padStart(2, '0');
     document.getElementById('clock').innerText = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
   };
-  tick();
-  setInterval(tick, 1000);
+  tick(); setInterval(tick, 1000);
 }
 
-// ================= CONNECTION =================
 function initConnection() {
   const update = () => {
-    const status = document.getElementById('connStatus');
-    const text = document.getElementById('connText');
-    if (navigator.onLine) {
-      status.classList.remove('offline');
-      text.innerText = 'ออนไลน์';
-    } else {
-      status.classList.add('offline');
-      text.innerText = 'ออฟไลน์';
-    }
+    const status = document.getElementById('connStatus'); const text = document.getElementById('connText');
+    if (navigator.onLine) { status.classList.remove('offline'); text.innerText = 'ออนไลน์'; }
+    else { status.classList.add('offline'); text.innerText = 'ออฟไลน์'; }
   };
-  window.addEventListener('online', () => { update(); toast('🌐 เน็ตกลับมา'); setTimeout(syncQueue, 1000); });
+  window.addEventListener('online', () => { update(); toast('🌐 เน็ตกลับมา'); });
   window.addEventListener('offline', () => { update(); toast('📵 เน็ตหลุด'); });
   update();
 }
@@ -587,19 +426,15 @@ function showScanner() {
   document.getElementById('camStatus').style.display = 'block';
   document.getElementById('reader').style.display = 'none';
 
-    // ✅ เริ่มโหลดสถานะจุดตรวจ
   fetchCheckpointStatus();
   if (window._statusInterval) clearInterval(window._statusInterval);
-  window._statusInterval = setInterval(fetchCheckpointStatus, 60000); // รีเฟรชทุก 1 นาที
+  window._statusInterval = setInterval(fetchCheckpointStatus, 60000);
 
-    stopWatchGPS();
+  stopWatchGPS();
   if (isScanning) return;
   
   Html5Qrcode.getCameras().then(devices => {
-    if (!devices || devices.length === 0) {
-      document.getElementById('camStatusText').innerText = 'ไม่พบกล้อง';
-      return;
-    }
+    if (!devices || devices.length === 0) { document.getElementById('camStatusText').innerText = 'ไม่พบกล้อง'; return; }
     let cameraId = devices[0].id;
     for (const d of devices) {
       const l = d.label.toLowerCase();
@@ -608,12 +443,11 @@ function showScanner() {
     scanner = new Html5Qrcode("reader");
     document.getElementById('camStatus').style.display = 'none';
     document.getElementById('reader').style.display = 'block';
-
-    scanner.start(cameraId, { fps: 10, qrbox: { width: 250, height: 250 } },
-      onScanSuccess, () => {}).then(() => { isScanning = true; }).catch(err => {
-      document.getElementById('camStatus').style.display = 'block';
-      document.getElementById('camStatusText').innerText = 'เปิดกล้องไม่ได้: ' + err.message;
-    });
+    scanner.start(cameraId, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, () => {})
+      .then(() => { isScanning = true; }).catch(err => {
+        document.getElementById('camStatus').style.display = 'block';
+        document.getElementById('camStatusText').innerText = 'เปิดกล้องไม่ได้: ' + err.message;
+      });
   }).catch(err => {
     document.getElementById('camStatus').style.display = 'block';
     document.getElementById('camStatusText').innerText = 'ไม่สามารถเข้าถึงกล้อง — กรุณาอนุญาตสิทธิ์';
@@ -624,19 +458,13 @@ function showForm() {
   document.getElementById('loginView').classList.remove('show');
   document.getElementById('scannerView').classList.remove('show');
   document.getElementById('formView').classList.add('show');
-  if (scanner && isScanning) {
-    scanner.stop().then(() => { isScanning = false; }).catch(() => { isScanning = false; });
-  }
+  if (scanner && isScanning) { scanner.stop().then(() => { isScanning = false; }).catch(() => { isScanning = false; }); }
 }
 
 function onScanSuccess(decodedText) {
   let cp = null;
-  try {
-    const url = new URL(decodedText);
-    cp = url.searchParams.get('cp');
-  } catch (e) {
-    if (/^CP\d+$/i.test(decodedText.trim())) cp = decodedText.trim().toUpperCase();
-  }
+  try { const url = new URL(decodedText); cp = url.searchParams.get('cp'); } 
+  catch (e) { if (/^CP\d+$/i.test(decodedText.trim())) cp = decodedText.trim().toUpperCase(); }
   if (!cp) { toast('❌ QR นี้ไม่ใช่จุดตรวจ'); return; }
   cp = cp.toUpperCase();
   toast('✅ พบจุด: ' + cp);
@@ -652,44 +480,31 @@ function promptManualCp() {
   window.location.href = window.location.pathname + '?cp=' + upper;
 }
 
-// ================= CP INFO =================
+// ================= CP INFO & SHIFT =================
 async function loadCpInfo() {
   document.getElementById('cpCode').innerText = currentCp;
   document.getElementById('cpName').innerText = getCpName(currentCp);
 }
 
-// ================= SHIFT =================
 function updateShiftBadge() {
-  const d = new Date();
-  const m = d.getHours() * 60 + d.getMinutes();
+  const d = new Date(); const m = d.getHours() * 60 + d.getMinutes();
   const inWindow = m >= 900 || m < 540;
   let shiftName = 'ระหว่างกะ';
   if (m >= 0 && m < 510) shiftName = '🌙 กะที่ 1 (00:00-08:30)';
   else if (m >= 930) shiftName = '🌆 กะที่ 2 (15:30-24:00)';
-  const badge = document.getElementById('shiftBadge');
-  const text = document.getElementById('shiftText');
-  if (inWindow) {
-    badge.classList.remove('warn');
-    text.innerHTML = '<b>' + shiftName + '</b> · อยู่ในเวลาสแกน';
-  } else {
-    badge.classList.add('warn');
-    text.innerHTML = '<b>' + shiftName + '</b> · นอกเวลาสแกน';
-  }
+  const badge = document.getElementById('shiftBadge'); const text = document.getElementById('shiftText');
+  if (inWindow) { badge.classList.remove('warn'); text.innerHTML = '<b>' + shiftName + '</b> · อยู่ในเวลาสแกน'; }
+  else { badge.classList.add('warn'); text.innerHTML = '<b>' + shiftName + '</b> · นอกเวลาสแกน'; }
   setTimeout(updateShiftBadge, 30000);
 }
 
 // ================= GPS =================
 function setGpsStatus(state, text) {
-  const bar = document.getElementById('gpsBar');
-  const icon = document.getElementById('gpsIcon');
-  const spinner = document.getElementById('gpsSpinner');
+  const bar = document.getElementById('gpsBar'); const icon = document.getElementById('gpsIcon'); const spinner = document.getElementById('gpsSpinner');
   bar.classList.remove('ok', 'warn', 'bad');
-  if (state === 'loading') {
-    icon.style.display = 'none';
-    spinner.style.display = 'inline-block';
-  } else {
-    icon.style.display = 'inline-block';
-    spinner.style.display = 'none';
+  if (state === 'loading') { icon.style.display = 'none'; spinner.style.display = 'inline-block'; } 
+  else {
+    icon.style.display = 'inline-block'; spinner.style.display = 'none';
     if (state === 'ok') { icon.innerText = '🟢'; bar.classList.add('ok'); }
     else if (state === 'warn') { icon.innerText = '🟡'; bar.classList.add('warn'); }
     else if (state === 'bad') { icon.innerText = '🔴'; bar.classList.add('bad'); }
@@ -703,13 +518,10 @@ function gpsQuality(acc) {
   return { state: 'bad', text: '±' + acc + ' ม. · คลาดเคลื่อน' };
 }
 
-// ================= WATCH GPS =================
 function startWatchGPS() {
   if (!navigator.geolocation) { setGpsStatus('bad', 'ไม่รองรับ GPS'); return; }
   stopWatchGPS();
-  _watchBestPos = null;
-  _watchStartTime = Date.now();
-
+  _watchBestPos = null; _watchStartTime = Date.now();
   const isOnline = navigator.onLine;
   setGpsStatus('loading', isOnline ? '🛰️ กำลังค้นหาดาวเทียม...' : '📵 โหมดออฟไลน์ — GPS ใช้เวลา 30-90 วิ');
 
@@ -726,22 +538,15 @@ function startWatchGPS() {
     },
     err => {
       let msg = 'ไม่สามารถระบุตำแหน่ง';
-      if (err.code === 1) msg = 'ไม่อนุญาต GPS';
-      else if (err.code === 2) msg = 'หาตำแหน่งไม่ได้ — ออกที่โล่ง';
+      if (err.code === 1) msg = 'ไม่อนุญาต GPS'; else if (err.code === 2) msg = 'หาตำแหน่งไม่ได้ — ออกที่โล่ง';
       setGpsStatus('bad', msg);
     },
     { enableHighAccuracy: true, timeout: 120000, maximumAge: navigator.onLine ? 0 : 60000 }
   );
 }
 
-function stopWatchGPS() {
-  if (_watchId !== null) { navigator.geolocation.clearWatch(_watchId); _watchId = null; }
-}
-
-function refreshGPS() {
-  toast('🔄 กำลังรีเฟรช GPS...');
-  startWatchGPS();
-}
+function stopWatchGPS() { if (_watchId !== null) { navigator.geolocation.clearWatch(_watchId); _watchId = null; } }
+function refreshGPS() { toast('🔄 กำลังรีเฟรช GPS...'); startWatchGPS(); }
 
 function waitForGoodPosition(maxWaitMs) {
   return new Promise(resolve => {
@@ -755,7 +560,6 @@ function waitForGoodPosition(maxWaitMs) {
   });
 }
 
-// ================= LAST POSITION =================
 function saveLastPosition(lat, lng, acc) {
   try { localStorage.setItem('guardTour_lastPos', JSON.stringify({ lat, lng, acc, ts: Date.now() })); } catch (e) {}
 }
@@ -769,19 +573,24 @@ function getLastPosition() {
   } catch (e) { return null; }
 }
 
-// ================= SAVE SCAN =================
+// ================= SAVE SCAN (Online Only) =================
 async function saveScan() {
   const session = getSession();
   if (!session) { toast('❌ session หมดอายุ — กรุณา login'); setTimeout(() => location.href = window.location.pathname, 1000); return; }
 
+  if (!navigator.onLine) {
+    setStatus('📵 ไม่มีอินเทอร์เน็ต — ไม่สามารถบันทึกได้', 'err');
+    return;
+  }
+
   const btn = document.getElementById('btn');
   btn.disabled = true;
-  setStatus('⏳ กำลังบันทึก...', 'info');
+  setStatus('⏳ กำลังระบุตำแหน่ง...', 'info');
 
   let pos = _watchBestPos;
   if (!pos || pos.acc > 100) {
     setStatus('⏳ รอ GPS...', 'info');
-    pos = await waitForGoodPosition(navigator.onLine ? 15000 : 60000);
+    pos = await waitForGoodPosition(15000);
   }
   if (!pos) pos = getLastPosition();
   if (!pos) {
@@ -793,220 +602,97 @@ async function saveScan() {
 
   const q = gpsQuality(Math.round(pos.acc));
   setGpsStatus(q.state, q.text);
+  setStatus('⏳ กำลังบันทึกข้อมูล...', 'info');
 
-  // ✅ ชื่อจุดจาก CP_MAP
-  const cpName = getCpName(currentCp);
-
-  const scanData = {
-    cp: currentCp,
-    cpName: cpName,   // ✅ เพิ่มชื่อจุดเข้า queue
-    name: session.name,
-    pin: session.pin,
-    lat: pos.lat,
-    lng: pos.lng,
-    acc: pos.acc,
-    ts: Date.now()
-  };
-
-  await GTDB.addScanToQueue(scanData);
-  await updateQueueBadge();
-
-  // ✅ แสดง overlay สำเร็จ (พร้อมชื่อจุด)
-  showSuccessOverlay(currentCp, cpName, scanData.ts);
+  const cbName = '__scanCb_' + Date.now();
   
-  // ✅ โหลดประวัติใหม่
-  setTimeout(loadHistory, 3000);
-
-  // ✅ สั่นมือถือ
-  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-
-  btn.disabled = false;
-
-  // ✅ sync ทันทีถ้าออนไลน์
-  if (navigator.onLine) {
-    setTimeout(async () => {
-      await syncQueue();
-      // อัปเดตข้อความใน overlay
-      const q = await GTDB.countQueuedScans();
-      const el = document.getElementById('successQueue');
-      if (el) {
-        el.innerText = q === 0 
-          ? '✅ ส่งข้อมูลสำเร็จ' 
-          : '📦 ค้างส่ง ' + q + ' รายการ';
-      }
-    }, 500);
-  } else {
-    const el = document.getElementById('successQueue');
-    if (el) el.innerText = '📵 ออฟไลน์ · จะ sync เมื่อมีเน็ต';
-  }
-}
-
-// ✅ ฟังก์ชันแสดง overlay (ใช้ CP_MAP)
-function showSuccessOverlay(cp, cpName, ts) {
-  const overlay = document.getElementById('successOverlay');
-  const d = new Date(ts);
-  const pad = n => String(n).padStart(2, '0');
-  
-  document.getElementById('successCpName').innerText = cpName || getCpName(cp);
-  document.getElementById('successCpCode').innerText = cp;
-  document.getElementById('successTime').innerText =
-    pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-  document.getElementById('successQueue').innerText = '⏳ กำลัง sync...';
-  
-  overlay.style.display = 'flex';
-  
-  setTimeout(() => {
-    overlay.style.display = 'none';
-  }, 4000);
-}
-
-async function fetchCpMap() {
-  if (!navigator.onLine) return;
-  
-  const cbName = '__onCpMap_' + Date.now();
-  
-  window[cbName] = async function(json) {
+  window[cbName] = function(res) {
     delete window[cbName];
-    const s = document.getElementById('jsonp-cpmap');
+    const s = document.getElementById('jsonp-scan');
     if (s) s.remove();
-    
-    if (json && json.ok && json.checkpoints) {
-      const map = {};
-      json.checkpoints.forEach(c => { map[c.code] = c.name; });
-      await GTDB.setMeta('cpMap', map);
+    btn.disabled = false;
+
+    if (res && res.ok && !res.rejected && !res.duplicate) {
+      setStatus('✅ บันทึกสำเร็จ', 'ok');
+      showSuccessOverlay(currentCp, getCpName(currentCp), Date.now());
       
-      // อัปเดตชื่อจุดบนหน้าจอทันที
-      if (currentCp && map[currentCp]) {
-        document.getElementById('cpName').innerText = map[currentCp];
-      }
+      GTDB.addToHistory({
+        cp: currentCp,
+        cpName: getCpName(currentCp),
+        name: session.name,
+        ts: Date.now(),
+        acc: pos.acc,
+        status: 'success'
+      }).then(() => {
+        if (typeof loadHistory === 'function') loadHistory();
+      });
+
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      
+      // ดึงสถานะล่าสุดมาแสดง (ถ้ามี)
+      if (typeof fetchCheckpointStatus === 'function') fetchCheckpointStatus();
+
+    } else {
+      let msg = (res && res.msg) ? res.msg : 'เกิดข้อผิดพลาด';
+      setStatus('❌ ' + msg, 'err');
     }
   };
-  
+
   const script = document.createElement('script');
-  script.id = 'jsonp-cpmap';
-  script.src = API_URL + '?action=getCheckpoints&callback=' + cbName + '&_=' + Date.now();
+  script.id = 'jsonp-scan';
+  script.src = API_URL + '?action=addScan' +
+    '&cp=' + encodeURIComponent(currentCp) +
+    '&name=' + encodeURIComponent(session.name) +
+    '&pin=' + encodeURIComponent(session.pin) +
+    '&lat=' + pos.lat +
+    '&lng=' + pos.lng +
+    '&acc=' + pos.acc +
+    '&callback=' + cbName +
+    '&_=' + Math.random();
+
   script.onerror = function() {
     delete window[cbName];
-    const s = document.getElementById('jsonp-cpmap');
+    const s = document.getElementById('jsonp-scan');
     if (s) s.remove();
+    btn.disabled = false;
+    setStatus('❌ การเชื่อมต่อขัดข้อง', 'err');
   };
+
   document.body.appendChild(script);
 }
-  
+
+function showSuccessOverlay(cp, cpName, ts) {
+  const overlay = document.getElementById('successOverlay');
+  const d = new Date(ts); const pad = n => String(n).padStart(2, '0');
+  document.getElementById('successCpName').innerText = cpName || getCpName(cp);
+  document.getElementById('successCpCode').innerText = cp;
+  document.getElementById('successTime').innerText = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  overlay.style.display = 'flex';
+  setTimeout(() => { overlay.style.display = 'none'; }, 4000);
+}
+
 function setStatus(msg, cls) {
   const s = document.getElementById('status');
   s.innerText = msg;
   s.className = 'show ' + (cls || 'info');
 }
 
-// ================= SYNC =================
-let _syncing = false;
-async function syncQueue() {
-  if (_syncing || !navigator.onLine) return;
-  const queue = await GTDB.getAllQueuedScans();
-  if (queue.length === 0) return;
-  
-  _syncing = true;
-  let done = 0, failed = 0;
-  
-  for (const item of queue) {
-    try {
-      console.log('📤 Syncing:', item);
-      await fetch(API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'addScan', data: item })
-      });
-      
-      // ✅ เก็บประวัติ
-      await GTDB.addToHistory({
-        cp: item.cp,
-        cpName: getCpName(item.cp),
-        name: item.name,
-        ts: item.ts,
-        acc: item.acc,
-        status: 'success'
-      });
-      
-      await GTDB.deleteQueuedScan(item.id);
-      done++;
-    } catch (err) {
-      console.error('❌ Sync error:', err);
-      failed++;
-    }
-  }
-  
-  console.log('📊 Sync done:', done, 'failed:', failed);
-  _syncing = false;
-  await updateQueueBadge();
-  
-  if (done > 0) {
-    toast('✅ Sync ' + done + ' รายการ');
-    setTimeout(loadHistory, 500);
-  }
-}
-
-async function updateQueueBadge() {
-  const count = await GTDB.countQueuedScans();
-  const badge = document.getElementById('queueBadge');
-  if (!badge) return;
-  if (count > 0) {
-    badge.innerText = '📦 ค้างส่ง ' + count + ' รายการ';
-    badge.style.display = 'block';
-  } else {
-    badge.style.display = 'none';
-  }
-}
-
-// ================= TOAST =================
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.innerText = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
+// ================= HISTORY =================
 async function loadHistory() {
   const session = getSession();
   if (!session) return;
-
   const history = await GTDB.getHistory(50);
   const myHistory = history.filter(h => h.name === session.name).slice(0, 10);
-
-  const panel = document.getElementById('historyPanel');
-  const list = document.getElementById('historyList');
+  const panel = document.getElementById('historyPanel'); const list = document.getElementById('historyList');
   if (!panel || !list) return;
-
-  if (myHistory.length === 0) {
-    panel.style.display = 'none';
-    return;
-  }
+  if (myHistory.length === 0) { panel.style.display = 'none'; return; }
 
   list.innerHTML = myHistory.map(h => {
-    const d = new Date(h.ts);
-    const pad = n => String(n).padStart(2, '0');
+    const d = new Date(h.ts); const pad = n => String(n).padStart(2, '0');
     const timeStr = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-
-    let icon = '✅';
-    let color = 'var(--accent)';
-    let bg = 'rgba(0,255,136,0.06)';
-    let borderColor = 'rgba(0,255,136,0.25)';
-    let statusText = '';
-
-    if (h.status === 'rejected') {
-      icon = '❌';
-      color = 'var(--danger)';
-      bg = 'rgba(255,51,102,0.06)';
-      borderColor = 'rgba(255,51,102,0.25)';
-      statusText = h.reason ? ' · ' + h.reason : '';
-    } else if (h.status === 'duplicate') {
-      icon = '⚠️';
-      color = 'var(--warn)';
-      bg = 'rgba(255,181,71,0.06)';
-      borderColor = 'rgba(255,181,71,0.25)';
-      statusText = ' · ซ้ำ';
-    }
+    let icon = '✅'; let color = 'var(--accent)'; let bg = 'rgba(0,255,136,0.06)'; let borderColor = 'rgba(0,255,136,0.25)'; let statusText = '';
+    if (h.status === 'rejected') { icon = '❌'; color = 'var(--danger)'; bg = 'rgba(255,51,102,0.06)'; borderColor = 'rgba(255,51,102,0.25)'; statusText = h.reason ? ' · ' + h.reason : ''; } 
+    else if (h.status === 'duplicate') { icon = '⚠️'; color = 'var(--warn)'; bg = 'rgba(255,181,71,0.06)'; borderColor = 'rgba(255,181,71,0.25)'; statusText = ' · ซ้ำ'; }
 
     return '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; background:' + bg + '; border:1px solid ' + borderColor + '; border-radius:10px; font-size:12px;">' +
       '<div style="display:flex; align-items:center; gap:10px; min-width:0;">' +
@@ -1019,9 +705,9 @@ async function loadHistory() {
       '<div style="color:var(--text-dim); font-family:\'JetBrains Mono\', monospace; font-size:11px; font-weight:600; white-space:nowrap;">' + timeStr + '</div>' +
     '</div>';
   }).join('');
-
   panel.style.display = 'block';
 }
+
 async function clearHistoryConfirm() {
   if (!confirm('ล้างประวัติการสแกนทั้งหมด?')) return;
   await GTDB.clearHistory();
@@ -1029,84 +715,63 @@ async function clearHistoryConfirm() {
   toast('🗑️ ล้างประวัติแล้ว');
 }
 
-// ================= CLEANUP =================
 window.addEventListener('beforeunload', () => { stopWatchGPS(); });
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && !_watchId && currentCp) startWatchGPS();
-});
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !_watchId && currentCp) startWatchGPS(); });
 
-// ================= SW =================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => {
-        reg.update();
-        reg.addEventListener('updatefound', () => {
-          const nw = reg.installing;
-          nw.addEventListener('statechange', () => {
-            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-              setTimeout(() => window.location.reload(true), 500);
-            }
-          });
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.update();
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) setTimeout(() => window.location.reload(true), 500);
         });
-      }).catch(err => console.error('SW:', err));
+      });
+    }).catch(err => console.error('SW:', err));
   });
 }
 
 // ================= CHECKPOINT STATUS =================
 function fetchCheckpointStatus() {
   const cbName = '__cpStatusCb_' + Date.now();
-  
   window[cbName] = function(json) {
     delete window[cbName];
     const s = document.getElementById('jsonp-cpstatus');
     if (s) s.remove();
-
     if (!json || !json.ok || !json.data) {
-      document.getElementById('checkpointStatusList').innerHTML = 
-        '<div style="text-align:center; font-size:12px; color:var(--danger); padding: 10px;">❌ ไม่สามารถโหลดสถานะได้</div>';
+      document.getElementById('checkpointStatusList').innerHTML = '<div style="text-align:center; font-size:12px; color:var(--danger); padding: 10px;">❌ ไม่สามารถโหลดสถานะได้</div>';
       return;
     }
-
     const list = document.getElementById('checkpointStatusList');
     if (!list) return;
 
     list.innerHTML = json.data.map(function(cp) {
       let statusText = '';
-      if (cp.status === 'good') statusText = 'ปกติ';
-      else if (cp.status === 'warn') statusText = 'ควรตรวจ';
-      else statusText = 'ล่าช้า';
-
+      if (cp.status === 'good') statusText = 'ปกติ'; else if (cp.status === 'warn') statusText = 'ควรตรวจ'; else statusText = 'ล่าช้า';
       return '<div class="cp-card ' + cp.status + '">' +
-        '<div class="cp-card-head">' +
-          '<div>' +
-            '<div class="cp-card-code">' + cp.code + '</div>' +
-            '<div class="cp-card-name">' + cp.name + '</div>' +
-          '</div>' +
-          '<span class="cp-card-badge ' + cp.status + '">' + statusText + '</span>' +
-        '</div>' +
-        '<div class="cp-card-meta">' +
-          '<span>📅 ' + cp.lastTime + '</span>' +
-          '<span>👤 ' + cp.guard + '</span>' +
-        '</div>' +
+        '<div class="cp-card-head"><div><div class="cp-card-code">' + cp.code + '</div><div class="cp-card-name">' + cp.name + '</div></div>' +
+        '<span class="cp-card-badge ' + cp.status + '">' + statusText + '</span></div>' +
+        '<div class="cp-card-meta"><span>📅 ' + cp.lastTime + '</span><span>👤 ' + cp.guard + '</span></div>' +
       '</div>';
     }).join('');
   };
-
   const script = document.createElement('script');
   script.id = 'jsonp-cpstatus';
   script.src = API_URL + '?action=getCheckpointStatus&callback=' + cbName + '&_=' + Math.random();
   script.onerror = function() {
-    delete window[cbName];
-    const s = document.getElementById('jsonp-cpstatus');
-    if (s) s.remove();
-    document.getElementById('checkpointStatusList').innerHTML = 
-      '<div style="text-align:center; font-size:12px; color:var(--danger); padding: 10px;">❌ การเชื่อมต่อขัดข้อง</div>';
+    delete window[cbName]; const s = document.getElementById('jsonp-cpstatus'); if (s) s.remove();
+    document.getElementById('checkpointStatusList').innerHTML = '<div style="text-align:center; font-size:12px; color:var(--danger); padding: 10px;">❌ การเชื่อมต่อขัดข้อง</div>';
   };
   document.body.appendChild(script);
 }
-  
-console.log('✅ App v2.0 loaded');
+
+function toast(msg) {
+  const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+console.log('✅ App v3.0 (Online Only) loaded');
 </script>
 </body>
 </html>
